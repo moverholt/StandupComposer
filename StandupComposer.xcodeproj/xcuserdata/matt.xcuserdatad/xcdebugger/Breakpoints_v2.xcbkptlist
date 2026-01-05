@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "08A62FFB-863D-471B-B4A2-9A2B35847A53"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "79ACE085-2776-4CDB-BB6B-2BA6A38992BB"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Model/Workstream/WorkstreamDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "28"
+            endingLineNumber = "28"
+            landmarkName = "WorkstreamDocument"
+            landmarkType = "3">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D7705604-5DDD-4E3B-88BC-73FD8519ED44"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/AppDelegate.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "282"
+            endingLineNumber = "282"
+            landmarkName = "populateStatusMenu()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "091E74AF-CC45-4200-A3EF-A1B3D99FE17D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocumentController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "19"
+            endingLineNumber = "19"
+            landmarkName = "currentWorkspace"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B046FC7E-A683-4061-9DE0-A89F79DCB39D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "84"
+            endingLineNumber = "84"
+            landmarkName = "fileWrapper(ofType:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F01CA2BA-F898-4C7F-B0A2-396F5A02B823"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "164"
+            endingLineNumber = "164"
+            landmarkName = "read(from:ofType:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DCC9340F-375F-4E25-AC55-797737F106FB"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "147"
+            endingLineNumber = "147"
+            landmarkName = "read(from:ofType:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "F1C6461C-602C-47C6-9913-B39E204BBAD7"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "124"
+            endingLineNumber = "124"
+            landmarkName = "read(from:ofType:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "291F8913-4A49-4CD5-9FEA-B56BEF9891C7"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "195"
+            endingLineNumber = "195"
+            landmarkName = "read(from:ofType:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
