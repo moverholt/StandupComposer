@@ -30,8 +30,8 @@
             filePath = "StandupComposer/AppDelegate.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "282"
-            endingLineNumber = "282"
+            startingLineNumber = "267"
+            endingLineNumber = "267"
             landmarkName = "populateStatusMenu()"
             landmarkType = "7">
          </BreakpointContent>
@@ -62,8 +62,8 @@
             filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "84"
-            endingLineNumber = "84"
+            startingLineNumber = "95"
+            endingLineNumber = "95"
             landmarkName = "fileWrapper(ofType:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -78,8 +78,8 @@
             filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "164"
-            endingLineNumber = "164"
+            startingLineNumber = "175"
+            endingLineNumber = "175"
             landmarkName = "read(from:ofType:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -94,8 +94,8 @@
             filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "147"
-            endingLineNumber = "147"
+            startingLineNumber = "158"
+            endingLineNumber = "158"
             landmarkName = "read(from:ofType:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -110,8 +110,8 @@
             filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "124"
-            endingLineNumber = "124"
+            startingLineNumber = "135"
+            endingLineNumber = "135"
             landmarkName = "read(from:ofType:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -119,16 +119,16 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "291F8913-4A49-4CD5-9FEA-B56BEF9891C7"
+            uuid = "905C6A14-638B-4F7F-87E4-2A07F9881342"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "StandupComposer/Windows/WorkspaceWindow/WorkspaceDocument.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "195"
-            endingLineNumber = "195"
-            landmarkName = "read(from:ofType:)"
+            startingLineNumber = "37"
+            endingLineNumber = "37"
+            landmarkName = "showWindows()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

@@ -37,6 +37,17 @@ class WorkspaceDocument: NSDocument {
         super.showWindows()
         NSApp.appDelegate?.populateStatusMenu()
     }
+    
+    override func makeWindowControllers() {
+        if model == nil {
+            model = WorkspaceDocumentModel(
+                workspace: Workspace(),
+                workstreams: [],
+                standups: []
+            )
+        }
+        super.makeWindowControllers()
+    }
 
     override func windowControllerDidLoadNib(_ cont: NSWindowController) {
         super.windowControllerDidLoadNib(cont)
@@ -189,13 +200,6 @@ class WorkspaceDocument: NSDocument {
             }
         }
         
-//        Task { @MainActor in
-//            Swift.print("Loaded workspace: \(loadedWorkspace?.id)")
-//            Swift.print("Workstream count: \(loadedWorkstreams.count)")
-//            model.workstreams = loadedWorkstreams
-//            model.standups = loadedStandups
-//            model.workspace = loadedWorkspace!
-//        }
 //        Task { @MainActor in
             model = WorkspaceDocumentModel(
                 workspace: loadedWorkspace!,

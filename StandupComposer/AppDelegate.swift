@@ -38,11 +38,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerGlobalHotKey()
         installHotKeyHandler()
         
-//        if let controller = self.wsDocCont {
-//            Task { @MainActor in
-//                let _ = await controller.openLastWorkspaceIfPossible()
-//            }
-//        }
+        if let controller = self.wsDocCont {
+            Task { @MainActor in
+                let _ = await controller.openLastWorkspaceIfPossible()
+            }
+        }
         
         dayChangeObserver = NotificationCenter.default.addObserver(
             forName: .NSCalendarDayChanged,
@@ -77,21 +77,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @IBAction func handleQuit(_ sender: Any) {
         NSApp.terminate(sender)
-    }
-    
-    @IBAction func newDocument(_ sender: Any?) {
-        print("New document!")
-        wsDocCont.newDocument(sender)
-//        do {
-//            let doc = try NSDocumentController.shared.makeUntitledDocument(
-//                ofType: "com.lumon.StandupComposer.workspace"
-//            )
-//            NSDocumentController.shared.addDocument(doc)
-//            doc.makeWindowControllers()
-//            doc.showWindows()
-//        } catch {
-//            NSApp.presentError(error)
-//        }
     }
     
     @IBAction func showSettings(_ sender: Any?) {
@@ -137,10 +122,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func makeWorkstreamPanel(
         _ id: Workstream.ID
-    ) -> WorkstreamPanelController {
+    ) -> WorkstreamPanelController? {
         print("Make controller for ID: \(id.uuidString)")
         guard let index = currWSDoc?.model.workstreams.findIndex(id: id) else {
-            fatalError()
+            return nil
         }
         let cont = WorkstreamPanelController(
             windowNibName: "WorkstreamPanelController"
@@ -159,7 +144,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func getWorkstreamPanel(
         _ id: Workstream.ID
-    ) -> WorkstreamPanelController {
+    ) -> WorkstreamPanelController? {
         if let cont = wsPanelControllers[id] {
             return cont
         } else {
@@ -346,11 +331,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func showWorkstreamPanel(_ id: Workstream.ID) {
-        getWorkstreamPanel(id).panel.makeKeyAndOrderFront(nil)
+        getWorkstreamPanel(id)?.panel.makeKeyAndOrderFront(nil)
     }
     
     private func hideWorkstreamPanel(_ id: Workstream.ID) {
-        getWorkstreamPanel(id).close()
+        getWorkstreamPanel(id)?.close()
     }
     
     func showWorkstreamInWorkspace(_ id: Workstream.ID) {
