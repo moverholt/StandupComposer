@@ -19,19 +19,23 @@ extension [Workstream] {
     }
     
     var active: [Workstream] {
-        filter({ $0.status == .active })
+        notDeleted.filter({ $0.status == .active })
     }
     
     var paused: [Workstream] {
-        filter({ $0.status == .paused })
+        notDeleted.filter({ $0.status == .paused })
     }
     
-    var deleted: [Workstream] {
-        filter({ $0.status == .deleted })
+    private var notDeleted: [Workstream] {
+        filter({ $0.deleted == false })
+    }
+    
+    private var deleted: [Workstream] {
+        filter({ $0.deleted == true })
     }
     
     var completed: [Workstream] {
-        filter({ $0.status == .completed })
+        notDeleted.filter({ $0.status == .completed })
     }
 }
 
@@ -40,11 +44,9 @@ extension Workstream {
         String,
         CustomStringConvertible,
         Codable,
-        CaseIterable,
-        Identifiable {
-        case active, paused, completed, deleted
+        CaseIterable {
+        case active, paused, completed
         var description: String { rawValue }
-        var id: String { rawValue }
     }
 }
 
@@ -55,6 +57,7 @@ struct Workstream: Codable, CustomStringConvertible, Identifiable {
     let created: Date
     var updated: Date
     var status: Status = .active
+    var deleted = false
     
     var updates: [Update]
     var plans: [Plan]
@@ -75,7 +78,8 @@ struct Workstream: Codable, CustomStringConvertible, Identifiable {
     }
     
     mutating func appendUpdate(_ day: IsoDay, body: String) {
-        updates.append(day, body)
+        let upd = Update(day: day, body: body)
+        updates.append(upd)
     }
     
     mutating func deleteUpdate(_ update: Update) {
@@ -85,19 +89,51 @@ struct Workstream: Codable, CustomStringConvertible, Identifiable {
             return
         }
         updates[index].deleted = true
-        updates[index].updatedAt = Date()
+        updates[index].updated = Date()
     }
     
-    var updatesByDay: [IsoDay: [Update]] {
-        Dictionary(grouping: updates.available, by: \.day)
+    mutating func deletePlan(_ plan: Plan) {
+        guard let index = plans.firstIndex(
+            where: { $0.id == plan.id }
+        ) else {
+            return
+        }
+        plans[index].deleted = true
+        plans[index].updated = Date()
+    }
+    
+    mutating func togglePlanComplete(
+        _ planId: Workstream.Plan.ID,
+        _ day: IsoDay?
+    ) {
+        if let i = plans.firstIndex(where: { $0.id == planId }) {
+            plans[i].dayComplete = day
+            plans[i].updated = Date()
+        }
+    }
+    
+    var logItems: [LogItem] {
+        updates.all.map(\.logItem) + plans.all.map(\.logItem)
+    }
+    
+    var logItemsByDay: [IsoDay: [LogItem]] {
+        Dictionary(grouping: logItems, by: \.day)
     }
     
     var description: String {
         "\(issueKey == nil ? "" : "[\(issueKey!)] ")\(title)"
     }
     
-    var daysWithUpdates: [IsoDay] {
-        updatesByDay.keys.sorted()
+    var daysWithLogItems: [IsoDay] {
+        logItemsByDay.keys.sorted()
+    }
+    
+    var updatesByDay: [IsoDay: [Update]] {
+        Dictionary(grouping: updates.all, by: \.day)
+    }
+    
+    var plansByDay: [IsoDay: [Plan]] {
+        Dictionary(grouping: plans.all, by: \.dayAdded)
     }
 }
 
@@ -105,17 +141,20 @@ extension Workstream {
     struct Update: Codable, Identifiable {
         let id: UUID
         let body: String
-        let createdAt: Date
-        var updatedAt: Date
+        let created: Date
+        var updated: Date
         let day: IsoDay
         var deleted = false
         
+        var standId: Standup.ID?
+        var planId: Plan.ID?
+        
         init(day: IsoDay, body: String) {
-            self.id = UUID()
+            id = UUID()
             self.body = body
             let now = Date()
-            self.createdAt = now
-            self.updatedAt = now
+            created = now
+            updated = now
             self.day = day
         }
         
@@ -125,20 +164,20 @@ extension Workstream {
     struct Plan: Codable, Identifiable {
         let id: UUID
         let body: String
-        let createdAt: Date
-        var updatedAt: Date
+        let created: Date
+        var updated: Date
         let dayAdded: IsoDay
         var dayComplete: IsoDay?
         var deleted = false
         var createdFromUpdateId: Workstream.Update.ID?
 
-        init(body: String) {
+        init(_ day: IsoDay, body: String) {
             self.id = UUID()
             self.body = body
             let now = Date()
-            self.createdAt = now
-            self.updatedAt = now
-            self.dayAdded = .today
+            self.created = now
+            self.updated = now
+            self.dayAdded = day
             self.dayComplete = nil
         }
         
@@ -152,9 +191,9 @@ extension Workstream {
         var createdAt: Date {
             switch self {
             case let .update(d):
-                d.createdAt
+                d.created
             case let .plan(d):
-                d.createdAt
+                d.created
             }
         }
         
@@ -170,13 +209,98 @@ extension Workstream {
 }
 
 extension [Workstream.Update] {
-    mutating func append(_ day: IsoDay, _ body: String) {
-        self.append(.init(day: day, body: body))
+//    mutating func append(_ day: IsoDay, _ body: String) {
+//        self.append(.init(day: day, body: body))
+//    }
+    
+    var all: [Workstream.Update] {
+        notDeleted
     }
     
-    var available: [Workstream.Update] {
+    private var notDeleted: [Workstream.Update] {
         filter({ $0.deleted == false })
     }
+    
+    private func onOrAfter(_ day: IsoDay) -> [Workstream.Update] {
+        self.filter({ $0.day >= day })
+    }
+    
+    var noStandup: [Workstream.Update] {
+        notDeleted.filter({ $0.standId == nil })
+    }
+    
+    func findIndex(id: Workstream.Update.ID) -> Int? {
+        firstIndex(where: { $0.id == id })
+    }
+    
+    func forStand(_ standId: Standup.ID) -> [Workstream.Update] {
+        notDeleted.filter({ $0.standId == standId })
+    }
+    
+    func forStandOrNoStand(_ standId: Standup.ID) -> [Workstream.Update] {
+        notDeleted.filter({ $0.standId == standId || $0.standId == nil })
+    }
+
+//    private func notIn(_ stand: Standup) -> [Workstream.Update] {
+//        self.filter({ !stand.wsUpdates.contains($0.id) })
+//    }
+    
+//    func addedSince(_ stand: Standup?) -> [Workstream.Update] {
+//        guard let stand else { return all }
+//        return self.notDeleted.onOrAfter(stand.day).notIn(stand)
+//    }
+    
+//    func includedInStand(_ stand: Standup) -> [Workstream.Update] {
+//        notDeleted.filter({ stand.wsUpdates.contains($0.id) })
+//    }
+}
+
+extension [Workstream.Plan] {
+    mutating func append(_ day: IsoDay, _ body: String) {
+        self.append(.init(day, body: body))
+    }
+        
+    func find(id: Workstream.Plan.ID) -> Workstream.Plan? {
+        first(where: { $0.id == id })
+    }
+    
+    func findIndex(id: Workstream.Plan.ID) -> Int? {
+        firstIndex(where: { $0.id == id })
+    }
+
+    var incomplete: [Workstream.Plan] {
+        all.filter({ $0.dayComplete == nil })
+    }
+    
+    var complete: [Workstream.Plan] {
+        all.filter({ $0.dayComplete != nil })
+    }
+    
+    var all: [Workstream.Plan] {
+        nonDeleted
+    }
+    
+    private var nonDeleted: [Workstream.Plan] {
+        filter({ $0.deleted == false })
+    }
+    
+    private func completedOnOrAfter(_ day: IsoDay) -> [Workstream.Plan] {
+        self.complete.filter({
+            guard let dc = $0.dayComplete else {
+                return false
+            }
+            return dc >= day
+        })
+    }
+    
+//    private func notIn(_ stand: Standup) -> [Workstream.Plan] {
+//        self.filter({ !stand.wsPlans.contains($0.id) })
+//    }
+    
+//    func completedSince(_ stand: Standup?) -> [Workstream.Plan] {
+//        guard let stand else { return complete }
+//        return nonDeleted.completedOnOrAfter(stand.day).notIn(stand)
+//    }
 }
 
 

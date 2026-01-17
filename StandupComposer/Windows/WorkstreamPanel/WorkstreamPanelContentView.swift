@@ -14,12 +14,12 @@ struct WorkstreamPanelContentView: View {
     @State private var position = ScrollPosition(edge: .bottom)
     
     private func handleSubmit() {
-        if text.isEmpty {
-            return
-        }
-        model.appendUpdate(.today, body: text)
-        text = ""
-        position.scrollTo(edge: .bottom)
+//        if text.isEmpty {
+//            return
+//        }
+//        model.appendUpdate(.today, body: text)
+//        text = ""
+//        position.scrollTo(edge: .bottom)
     }
     
     var body: some View {
@@ -50,21 +50,16 @@ struct WorkstreamPanelContentView: View {
                 .controlSize(.small)
             }
             ScrollView {
-                LazyVStack(
-                    alignment: .leading,
-                    spacing: 0
-                ) {
-                    ForEach(model.daysWithUpdates) { day in
-                        Text(day.formatted(style: .complete))
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                        Divider()
-                            .padding(.bottom)
-                        DayUpdates(
-                            updates: model.updatesByDay[day] ?? []
-                        )
-                    }
+                LazyVStack(alignment: .leading, spacing: 0) {
+//                    ForEach(model.daysWithLogItems) { day in
+//                        Text(day.formatted(style: .complete))
+//                            .font(.title2)
+//                            .foregroundStyle(.secondary)
+//                            .textSelection(.enabled)
+//                        Divider()
+//                            .padding(.bottom)
+//                        DayUpdates(updates: model.updatesByDay[day] ?? [])
+//                    }
                 }
             }
             .scrollPosition($position)
@@ -90,7 +85,7 @@ struct WorkstreamPanelContentView: View {
                     .buttonStyle(.bordered)
                     .disabled(text.isEmpty)
                     Spacer()
-                    Button("Add Update") {
+                    Button("Add update") {
                         handleSubmit()
                     }
                     .buttonStyle(.borderedProminent)

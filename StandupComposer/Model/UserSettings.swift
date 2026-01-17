@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 @Observable
 @MainActor
@@ -15,12 +16,15 @@ final class UserSettings {
     static let shared = UserSettings()
     
     // MARK: - Keys
+    
     private enum Keys: String {
         case workspaceSelected = "Settings.workspaceSelected"
         case openAIApiKey = "Settings.openAIApiKey"
+        case workspaceColumnVisibility = "Settings.workspaceColumnVisibility"
     }
 
     // MARK: - Stored Properties
+    
     var workspaceSelected: WorkspaceSelected = .none {
         didSet { saveWorkspaceSelected() }
     }
@@ -28,20 +32,31 @@ final class UserSettings {
     var openAIApiKey: String? = nil {
         didSet { saveOpenAIApiKey() }
     }
+    
+    var workspaceColumnVisibility: NavigationSplitViewVisibility = .all {
+        didSet { saveWorkspaceColumnVisibility() }
+    }
 
     // MARK: - Init
+    
     init() {
         loadWorkspaceSelected()
         loadOpenAIApiKey()
+        loadWorkspaceColumnVisibility()
     }
 
     // MARK: - Persistence
+    
     private func saveWorkspaceSelected() {
         saveKey(workspaceSelected, for: .workspaceSelected)
     }
     
     private func saveOpenAIApiKey() {
         saveKey(openAIApiKey, for: .openAIApiKey)
+    }
+    
+    private func saveWorkspaceColumnVisibility() {
+        saveKey(workspaceColumnVisibility, for: .workspaceColumnVisibility)
     }
     
     private func saveKey<T: Codable>(_ value: T?, for key: Keys) {
@@ -63,6 +78,10 @@ final class UserSettings {
     
     private func loadWorkspaceSelected() {
         self.workspaceSelected = loadKey(.workspaceSelected) ?? .none
+    }
+    
+    private func loadWorkspaceColumnVisibility() {
+        self.workspaceColumnVisibility = loadKey(.workspaceColumnVisibility) ?? .all
     }
     
     private func loadKey<T: Codable>(_ key: Keys) -> T? {

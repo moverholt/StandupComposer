@@ -8,60 +8,84 @@
 import SwiftUI
 
 struct WSUpdateRowView: View {
-    @Binding var ws: Workstream
-    @Binding var stand: Standup
+    @Environment(WorkspaceOverlayViewModel.self) var ovm
     
-    private var wsUpdateIndex: Int? {
-        stand.updates.findIndex(wsid: ws.id)
+    let stream: Workstream
+    @Binding var stand: Standup
+
+    private var streamUpdateIndex: Int? {
+        stand.prevDay.findIndex(wsid: stream.id)
     }
     
+    private var updates: [Workstream.Update] {
+        stream.updates.forStandOrNoStand(stand.id)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    if let key = ws.issueKey {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 0) {
+                    Text(stream.title)
+                        .font(.title)
+                    Spacer()
+                    if let key = stream.issueKey {
                         Text(key)
-                            .font(.caption)
+                            .font(.body)
                             .foregroundStyle(.secondary)
                     }
-                    Text(ws.title)
-                        .font(.headline)
                 }
-                Spacer()
+                Divider()
+                    .padding(.bottom)
             }
-            .padding(.bottom, 12)
-            HStack(alignment: .top) {
+            HStack(alignment: .top, spacing: 24) {
                 GroupBox(
                     label: Label(
-                        "Updates since last standup",
-                        systemImage: "list.bullet"
+                        "\(updates.count) New updates since last standup",
+                        systemImage: "clock"
                     )
                 ) {
                     VStack(alignment: .leading, spacing: 6) {
-                        if ws.updates.isEmpty {
-                            Text("No recorded updates since last standup")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+                        if updates.isEmpty {
+                            Text("None")
                         } else {
-                            ForEach(ws.updates.available) { u in
+                            ForEach(updates) { u in
                                 HStack {
+                                    Image(systemName: "circle.fill")
+                                        .font(.footnote)
                                     Text(u.body)
-                                        .foregroundStyle(.secondary)
+                                        .font(.title3)
                                 }
                             }
                         }
                     }
+                    .padding()
                     .frame(maxWidth: .infinity, alignment: .topLeading)
+                    HStack {
+                        Button(action: {
+                            ovm.showWorkstreamAddUpdate(
+                                stream.id,
+                                standId: stand.id
+                            )
+                        }) {
+                            Label("Add update", systemImage: "plus.circle")
+                        }
+                        .buttonStyle(.borderless)
+                        .controlSize(.small)
+                        Spacer()
+                    }
                 }
-                if let i = wsUpdateIndex {
+                if let i = streamUpdateIndex {
                     GroupBox(
                         label: Label(
-                            "Generated Update",
-                            systemImage: "brain"
+                            "AI Summary",
+                            systemImage: "sparkles.rectangle.stack"
                         )
                     ) {
-                        UpdateGeneratorView(update: $stand.updates[i], ws: $ws)
-                            .frame(maxWidth: .infinity, alignment: .topLeading)
+                        UpdateGeneratorView(
+                            update: $stand.prevDay[i],
+                            prompt: wsUpdatePrompt(stream, updates)
+                        )
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
                 }
             }
@@ -70,16 +94,15 @@ struct WSUpdateRowView: View {
 }
 
 #Preview {
-    @Previewable @State var ws = Workstream()
+    @Previewable @State var space = Workspace()
+    @Previewable @State var stream = Workstream()
     @Previewable @State var stand = Standup(.today)
-    WSUpdateRowView(ws: $ws, stand: $stand)
+    WSUpdateRowView(stream: stream, stand: $stand)
         .padding()
         .frame(width: 600, height: 300)
+        .environment(WorkspaceOverlayViewModel())
         .onAppear {
-            ws.issueKey = "FOOD-1234"
-            ws.appendUpdate(
-                .today,
-                body: "Added new pasta types"
-            )
+            stream.issueKey = "FOOD-1234"
+            stream.appendUpdate(.today, body: "Added new pasta types")
         }
 }

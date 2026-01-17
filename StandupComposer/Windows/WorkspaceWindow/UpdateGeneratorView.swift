@@ -8,12 +8,9 @@
 import SwiftUI
 
 struct UpdateGeneratorView: View {
-    @Binding var update: Standup.WorkstreamUpdate
-    @Binding var ws: Workstream
+    @Binding var update: Standup.WorkstreamGenUpdate
     
-    var prompt: String {
-        wsUpdatePrompt(ws.updates)
-    }
+    let prompt: String
     
     private func run() async {
         update.ai.final = nil
@@ -35,57 +32,76 @@ struct UpdateGeneratorView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .center) {
             Color.clear
-            VStack(alignment: .leading, spacing: 0) {
-                if let err = update.ai.error {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(err)
-                            .foregroundStyle(.red)
-                        Button("Try Again") {
+            if let err = update.ai.error {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(err)
+                        .foregroundStyle(.red)
+                    Button(
+                        action: {
                             Task {
                                 await run()
                             }
                         }
+                    ) {
+                        Label("Try Again", systemImage: "arrow.clockwise")
                     }
-                } else if let final = update.ai.final {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(final)
-                        Button("Regenerate") {
+                }
+            } else if let final = update.ai.final {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(final)
+                    Spacer()
+                    Button(
+                        action: {
                             Task {
                                 await run()
                             }
                         }
+                    ) {
+                        Label("Refresh summary", systemImage: "arrow.clockwise")
                     }
-                } else if update.ai.active {
-                    HStack(alignment: .top) {
+                    .controlSize(.small)
+                    .buttonStyle(.borderless)
+                }
+            } else if update.ai.active {
+                VStack(alignment: .leading) {
+                    HStack {
                         ProgressView()
                             .progressViewStyle(.circular)
                             .controlSize(.small)
-                        Text(update.ai.partial ?? "")
+                        Spacer()
                     }
-                } else {
-                    Button("Run") {
+                    Text(update.ai.partial ?? "")
+                    Spacer()
+                }
+            } else {
+                Button(
+                    action: {
                         Task {
                             await run()
                         }
                     }
+                ) {
+                    Label("Generate", systemImage: "sparkles")
                 }
-                Spacer()
             }
-            .textSelection(.enabled)
         }
+        .textSelection(.enabled)
     }
 }
 
 #Preview {
     @Previewable @State var ws = Workstream()
-    @Previewable @State var standUpdate = Standup.WorkstreamUpdate(Workstream())
-    UpdateGeneratorView(update: $standUpdate, ws: $ws)
-        .padding()
-        .background(
-            .thinMaterial,
-            in: RoundedRectangle(cornerRadius: 12)
-        )
-        .padding()
+    @Previewable @State var su = Standup.WorkstreamGenUpdate(Workstream())
+    UpdateGeneratorView(
+        update: $su,
+        prompt: wsUpdatePrompt(ws, ws.updates.all)
+    )
+    .padding()
+    .background(
+        .thinMaterial,
+        in: RoundedRectangle(cornerRadius: 12)
+    )
+    .padding()
 }

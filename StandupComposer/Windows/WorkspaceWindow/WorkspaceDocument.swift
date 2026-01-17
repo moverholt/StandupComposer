@@ -8,17 +8,13 @@
 import Cocoa
 import SwiftUI
 
-    //@MainActor
+// @MainActor
 @Observable
 final class WorkspaceDocumentModel {
     var workspace: Workspace
-    var workstreams: [Workstream]
-    var standups: [Standup]
     
-    init(workspace: Workspace, workstreams: [Workstream], standups: [Standup]) {
+    init(workspace: Workspace) {
         self.workspace = workspace
-        self.workstreams = workstreams
-        self.standups = standups
     }
 }
 
@@ -40,11 +36,7 @@ class WorkspaceDocument: NSDocument {
     
     override func makeWindowControllers() {
         if model == nil {
-            model = WorkspaceDocumentModel(
-                workspace: Workspace(),
-                workstreams: [],
-                standups: []
-            )
+            model = WorkspaceDocumentModel(workspace: Workspace())
         }
         super.makeWindowControllers()
     }
@@ -53,27 +45,27 @@ class WorkspaceDocument: NSDocument {
         super.windowControllerDidLoadNib(cont)
         let hostingController = NSHostingController(
             rootView: WorkspaceContentView(
-                streams: Binding(
-                    get: { self.model.workstreams },
+                workspace: Binding(
+                    get: { self.model.workspace },
                     set: {
-                        self.model.workstreams = $0
+                        self.model.workspace = $0
                         self.updateChangeCount(.changeDone)
                     }
-                ),
-                stands: Binding(
-                    get: { self.model.standups },
-                    set: {
-                        self.model.standups = $0
-                        self.updateChangeCount(.changeDone)
-                    }
-                ),
-                selected: Binding(
-                    get: { UserSettings.shared.workspaceSelected },
-                    set: { UserSettings.shared.workspaceSelected = $0 }
                 )
             )
+            .environment(UserSettings.shared)
         )
+            
+        // ✅ Important: make sure the hosted view tracks window resizing
+//        hostingController.view.autoresizingMask = [.width, .height]
+
         cont.contentViewController = hostingController
+        
+        // ✅ Set the initial window content size to your ideal
+        if let window = cont.window {
+            window.setContentSize(NSSize(width: 1000, height: 620))
+            // window.center() // optional
+        }
     }
     
     override func fileWrapper(ofType typeName: String) throws -> FileWrapper {
@@ -84,7 +76,7 @@ class WorkspaceDocument: NSDocument {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         
         // ---- Workspace.json (metadata + possibly embedded workstreams) ----
-        let workspaceData = try encoder.encode(model.workspace)
+        let workspaceData = try encoder.encode(model.workspace.meta)
         let workspaceWrapper = FileWrapper(regularFileWithContents: workspaceData)
         workspaceWrapper.preferredFilename = "Workspace.json"
         rootChildren["Workspace.json"] = workspaceWrapper
@@ -92,7 +84,7 @@ class WorkspaceDocument: NSDocument {
         // ---- Workstreams/ directory ----
         var workstreamChildren: [String: FileWrapper] = [:]
         
-        for workstream in model.workstreams {
+        for workstream in model.workspace.streams {
             let data = try encoder.encode(workstream)
             let filename = "\(workstream.id.uuidString).json"
             let fileWrapper = FileWrapper(regularFileWithContents: data)
@@ -109,7 +101,7 @@ class WorkspaceDocument: NSDocument {
         // ---- Standups/ directory ----
         var standupChildren: [String: FileWrapper] = [:]
         
-        for standup in model.standups {
+        for standup in model.workspace.stands {
             let data = try encoder.encode(standup)
             let filename = "\(standup.id.uuidString).json"
             let fileWrapper = FileWrapper(regularFileWithContents: data)
@@ -139,22 +131,22 @@ class WorkspaceDocument: NSDocument {
         
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-//        var loadedWorkspace = Workspace()  // default if no metadata
-        var loadedWorkspace: Workspace? = nil
+        var loadedWorkspaceMeta: Workspace.Meta? = nil
         
         // ---- Workspace.json (metadata: id, title, etc.) ----
         if let workspaceWrapper = children["Workspace.json"],
            let data = workspaceWrapper.regularFileContents {
             do {
-                loadedWorkspace = try decoder.decode(Workspace.self, from: data)
+                loadedWorkspaceMeta = try decoder
+                    .decode(Workspace.Meta.self, from: data)
             } catch {
                 NSLog("Failed to decode Workspace.json: \(error)")
-                    // fall back to default Workspace() if decode fails
+                // fall back to default Workspace() if decode fails
             }
         }
         
-        if loadedWorkspace == nil {
-            Swift.print("NO LOADED WORKSPACE")
+        if loadedWorkspaceMeta == nil {
+            Swift.print("No loaded workspace meta file!")
             fatalError()
         }
         
@@ -168,11 +160,8 @@ class WorkspaceDocument: NSDocument {
             for (_, wrapper) in workstreamFiles {
                 guard let data = wrapper.regularFileContents else { continue }
                 do {
-                    let workstream = try decoder.decode(
-                        Workstream.self,
-                        from: data
-                    )
-                    loadedWorkstreams.append(workstream)
+                    let ws = try decoder.decode(Workstream.self, from: data)
+                    loadedWorkstreams.append(ws)
                 } catch {
                     NSLog("Failed to decode workstream: \(error)")
                 }
@@ -189,23 +178,23 @@ class WorkspaceDocument: NSDocument {
             for (_, wrapper) in standupFiles {
                 guard let data = wrapper.regularFileContents else { continue }
                 do {
-                    let standup = try decoder.decode(
-                        Standup.self,
-                        from: data
-                    )
-                    loadedStandups.append(standup)
+                    let st = try decoder.decode(Standup.self, from: data)
+                    loadedStandups.append(st)
                 } catch {
                     NSLog("Failed to decode standup: \(error)")
                 }
             }
         }
         
+        let workspace = Workspace(
+            meta: loadedWorkspaceMeta!,
+            streams: loadedWorkstreams,
+            stands: loadedStandups
+        )
+        
+        
 //        Task { @MainActor in
-            model = WorkspaceDocumentModel(
-                workspace: loadedWorkspace!,
-                workstreams: loadedWorkstreams,
-                standups: loadedStandups
-            )
+            model = WorkspaceDocumentModel(workspace: workspace)
 //        }
     }
 }

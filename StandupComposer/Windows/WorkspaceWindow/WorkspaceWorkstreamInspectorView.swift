@@ -32,14 +32,14 @@ struct WorkspaceWorkstreamInspectorView: View {
                     )
                 )
                 Picker("Status", selection: $stream.status) {
-                    ForEach(Workstream.Status.allCases) { status in
+                    ForEach(Workstream.Status.allCases, id: \.self) { status in
                         Text(status.description)
                             .tag(status)
                     }
                 }
             }
             Section(
-                header: Text("")
+                header: Text("Meta")
             ) {
                 HStack {
                     Text("ID")
@@ -56,6 +56,9 @@ struct WorkspaceWorkstreamInspectorView: View {
                     Spacer()
                     Text(stream.updated.formatted())
                 }
+            }
+            Section("Status") {
+                Toggle("Deleted", isOn: $stream.deleted)
             }
         }
     }

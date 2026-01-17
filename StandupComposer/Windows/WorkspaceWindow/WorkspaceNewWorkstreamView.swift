@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct WorkspaceNewWorkstreamView: View {
-    @Binding var streams: [Workstream]
-    @Binding var selected: WorkspaceSelected
-    
+    @Environment(UserSettings.self) var settings
+    @Binding var workspace: Workspace
     @State private var title = "New Workstream"
     
     private func handleSubmit() {
@@ -19,8 +18,8 @@ struct WorkspaceNewWorkstreamView: View {
         }
         var stream = Workstream()
         stream.title = title
-        streams.append(stream)
-        selected = .workstream(stream.id)
+        workspace.streams.append(stream)
+        settings.workspaceSelected = .workstream(stream.id)
     }
     
     var body: some View {
@@ -41,15 +40,10 @@ struct WorkspaceNewWorkstreamView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }
-        .scenePadding()
     }
 }
 
 #Preview {
-    @Previewable @State var models: [Workstream] = []
-    @Previewable @State var selected = WorkspaceSelected.none
-    WorkspaceNewWorkstreamView(
-        streams: $models,
-        selected: $selected
-    )
+    @Previewable @State var workspace = Workspace()
+    WorkspaceNewWorkstreamView(workspace: $workspace)
 }

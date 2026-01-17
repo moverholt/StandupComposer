@@ -18,7 +18,7 @@ extension NSApplication {
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var statusMenu: NSMenu!
-    @IBOutlet var wsDocCont: WorkspaceDocumentController!
+//    @IBOutlet var wsDocCont: WorkspaceDocumentController!
     
     private var settings = UserSettings.shared
     
@@ -38,11 +38,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerGlobalHotKey()
         installHotKeyHandler()
         
-        if let controller = self.wsDocCont {
-            Task { @MainActor in
-                let _ = await controller.openLastWorkspaceIfPossible()
-            }
-        }
+//        if let controller = self.wsDocCont {
+//            Task { @MainActor in // QUESTION: Does this have to be main actor?
+//                let _ = await controller.openLastWorkspaceIfPossible()
+//            }
+//        }
         
         dayChangeObserver = NotificationCenter.default.addObserver(
             forName: .NSCalendarDayChanged,
@@ -67,7 +67,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     var currWSDoc: WorkspaceDocument? {
-        return wsDocCont.currentWorkspace
+        //        return wsDocCont.currentWorkspace
+        let doc = NSDocumentController.shared.documents.first as? WorkspaceDocument
+        return doc
     }
     
     @IBAction func handleOpenUpdateBar(_ sender: Any) {
@@ -124,19 +126,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         _ id: Workstream.ID
     ) -> WorkstreamPanelController? {
         print("Make controller for ID: \(id.uuidString)")
-        guard let index = currWSDoc?.model.workstreams.findIndex(id: id) else {
+        guard let index = currWSDoc?.model.workspace.streams.findIndex(id: id) else {
             return nil
         }
         let cont = WorkstreamPanelController(
             windowNibName: "WorkstreamPanelController"
         )
         cont.stream = Binding(
-            get: {
-                self.currWSDoc!.model.workstreams[index]
-            },
-            set: {
-                self.currWSDoc!.model.workstreams[index] = $0
-            }
+            get: { self.currWSDoc!.model.workspace.streams[index] },
+            set: { self.currWSDoc!.model.workspace.streams[index] = $0 }
         )
         wsPanelControllers[id] = cont
         return cont
@@ -171,7 +169,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         
         let status = RegisterEventHotKey(
-            UInt32(kVK_ANSI_J),              // J key
+            UInt32(kVK_ANSI_U),              // U key
             UInt32(cmdKey | optionKey),      // ⌘ ⌥
             hotKeyID,
             GetApplicationEventTarget(),
@@ -233,7 +231,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let currentWSTag = 3
     
     func populateStatusMenu() {
-        print("Filling in status menu")
         guard let firstDivide = statusMenu.item(
             withTag: firstDividerTag
         ) else {
@@ -264,7 +261,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         i += 1
         
         if let doc = currWSDoc {
-            for ws in doc.model.workstreams.active {
+            for ws in doc.model.workspace.streams.active {
                 let item = NSMenuItem(
                     title: ws.description,
                     action: #selector(handleShowWorkstreamPanel(_:)),
@@ -302,9 +299,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         cont.wspId = wspId
         cont.streams = Binding(
-            get: { doc.model.workstreams },
+            get: { doc.model.workspace.streams },
             set: {
-                doc.model.workstreams = $0
+                doc.model.workspace.streams = $0
                 doc.save(nil)
             }
         )

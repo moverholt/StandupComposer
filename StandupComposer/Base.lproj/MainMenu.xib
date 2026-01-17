@@ -14,11 +14,9 @@
         <customObject id="Voe-Tx-rLC" customClass="AppDelegate" customModule="StandupComposer" customModuleProvider="target">
             <connections>
                 <outlet property="statusMenu" destination="tit-He-2iD" id="vvt-Fl-M5E"/>
-                <outlet property="wsDocCont" destination="Ddj-Rz-KTX" id="z3a-oS-ZTK"/>
             </connections>
         </customObject>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
-        <customObject id="Ddj-Rz-KTX" customClass="WorkspaceDocumentController" customModule="StandupComposer" customModuleProvider="target"/>
         <menu title="Main Menu" systemMenu="main" id="AYu-sK-qS6">
             <items>
                 <menuItem title="StandupComposer" id="1Xt-HY-uBw">

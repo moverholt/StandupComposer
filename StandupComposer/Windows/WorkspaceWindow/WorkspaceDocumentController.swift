@@ -8,6 +8,7 @@
 import Cocoa
 
 
+// NOTE: No longer using, but might come back to it
 final class WorkspaceDocumentController: NSDocumentController {
     
     // MARK: - State

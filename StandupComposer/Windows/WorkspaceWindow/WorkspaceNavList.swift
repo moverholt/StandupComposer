@@ -8,18 +8,17 @@
 import SwiftUI
 
 struct WorkspaceNavList: View {
-    @Binding var streams: [Workstream]
-    @Binding var stands: [Standup]
-    @Binding var selected: WorkspaceSelected
-    
+    @Environment(UserSettings.self) var settings
+    @Binding var workspace: Workspace
     @State private var expandPaused = false
     @State private var expandComplete = false
 
     var body: some View {
-        List(selection: $selected) {
+        @Bindable var settings = settings
+        List(selection: $settings.workspaceSelected) {
             Section("Active Workstreams") {
                 ForEach(
-                    streams.active.sorted { $0.updated > $1.updated }
+                    workspace.streams.active.sorted { $0.updated > $1.updated }
                 ) { ws in
                     Text(ws.description)
                         .tag(WorkspaceSelected.workstream(ws.id))
@@ -35,21 +34,24 @@ struct WorkspaceNavList: View {
             .listSectionSeparator(.visible)
             Section("Standups") {
                 ForEach(
-                    stands.available.sorted { $0.updated > $1.updated }
+                    workspace.stands.available.sorted { $0.updated > $1.updated }
                 ) { st in
-                    Text(st.title)
-                        .tag(WorkspaceSelected.standup(st.id))
+                    Label(
+                        st.title,
+                        systemImage: st.editing ? "pencil" : "lock"
+                    )
+                    .tag(WorkspaceSelected.standup(st.id))
                 }
             }
             .listSectionSeparator(.visible)
             Section("Paused Workstreams", isExpanded: $expandPaused) {
-                ForEach(streams.paused) { model in
+                ForEach(workspace.streams.paused) { model in
                     Text(model.title)
                         .tag(WorkspaceSelected.workstream(model.id))
                 }
             }
             Section("Completed Workstreams", isExpanded: $expandComplete) {
-                ForEach(streams.completed) { model in
+                ForEach(workspace.streams.completed) { model in
                     Text(model.title)
                         .tag(WorkspaceSelected.workstream(model.id))
                 }
@@ -59,23 +61,27 @@ struct WorkspaceNavList: View {
 }
 
 #Preview {
-    @Previewable @State var streams: [Workstream] = []
-    @Previewable @State var stands: [Standup] = []
-    @Previewable @State var selected: WorkspaceSelected = .none
-    WorkspaceNavList(
-        streams: $streams,
-        stands: $stands,
-        selected: $selected
-    )
-    .listStyle(.sidebar)
-    .onAppear {
-        var ws1 = Workstream()
-        ws1.title = "Some work to be done"
-        ws1.issueKey = "FOOD-1234"
-        streams.append(ws1)
-        var ws2 = Workstream()
-        ws2.title = "Some work to be done"
-        ws2.issueKey = "PASTA-1234"
-        streams.append(ws2)
-    }
+    @Previewable @State var workspace = Workspace()
+    WorkspaceNavList(workspace: $workspace)
+        .listStyle(.sidebar)
+        .environment(UserSettings())
+        .onAppear {
+            var ws1 = Workstream()
+            ws1.title = "Some work to be done"
+            ws1.issueKey = "FOOD-1234"
+            workspace.streams.append(ws1)
+            var ws2 = Workstream()
+            ws2.title = "Some work to be done"
+            ws2.issueKey = "PASTA-1234"
+            workspace.streams.append(ws2)
+            
+            var s1 = Standup(.yesterday)
+            s1.title = "1/1/2026 Standup"
+            s1.publish()
+            workspace.stands.append(s1)
+            
+            var s2 = Standup(.today)
+            s2.title = "1/2/2026 Standup"
+            workspace.stands.append(s2)
+        }
 }

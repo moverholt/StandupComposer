@@ -74,48 +74,21 @@ struct WorkspaceWorkstreamDetailView: View {
             ScrollView {
                 LazyVStack(alignment: .leading) {
                     ForEach(last60Days) { day in
-                        if let updates = stream.updatesByDay[day] {
-                            VStack {
-                                Text(day.formatted(style: .abbreviated))
-                                    .font(.largeTitle)
-                                    .textSelection(.enabled)
+                        if stream.logItemsByDay[day] != nil {
+                            Text(day.formatted(style: .abbreviated))
+                                .font(.largeTitle)
+                            if let plans = stream.plansByDay[day] {
+                                WorkstreamPlansDay(
+                                    plans: plans,
+                                    stream: $stream
+                                )
                             }
-                            Divider()
-                            Text("Updates")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                            VStack {
-                                ForEach(updates) { upd in
-                                    HStack {
-                                        Text(upd.body)
-                                            .textSelection(.enabled)
-                                        Spacer()
-                                        Menu {
-                                            Button(role: .destructive) {
-                                                stream.deleteUpdate(upd)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                        } label: {
-                                            Image(systemName: "ellipsis")
-                                                .rotationEffect(.degrees(90))
-                                                .imageScale(.medium)
-                                                .padding(6)
-                                                .contentShape(Rectangle())
-                                        }
-                                    }
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(.ultraThinMaterial)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(.separator, lineWidth: 1)
-                                    )
-                                }
+                            if let updates = stream.updatesByDay[day] {
+                                WorkstreamUpdatesDay(
+                                    updates: updates,
+                                    stream: $stream
+                                )
                             }
-                            .padding(.bottom, 48)
                         }
                     }
                 }
@@ -156,7 +129,6 @@ struct WorkspaceWorkstreamDetailView: View {
                 .disabled(text == "")
             }
         }
-        .scenePadding()
         .onChange(of: stream.updates.count) {
             position.scrollTo(edge: .bottom)
         }

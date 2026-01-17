@@ -9,53 +9,76 @@ import SwiftUI
 
 struct EditStandScrollView: View {
     @Binding var stand: Standup
-    @Binding var streams: [Workstream]
-
+    @Binding var workspace: Workspace
+    
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading) {
                 HStack {
-                    Text("-24")
-                        .font(.largeTitle)
-                        .fontDesign(.monospaced)
+                    Text("Last standup")
+                        .font(.headline)
                     Spacer()
                 }
-                Divider()
-                    .padding(.bottom)
-                VStack(alignment: .leading, spacing: 24) {
-                    ForEach(stand.updates) { upd in
-                        if let i = streams.findIndex(id: upd.ws.id) {
-                            WSUpdateRowView(ws: $streams[i], stand: $stand)
-                        }
-                    }
+                if let ps = workspace.previousStandup {
+                    Text(ps.title)
+                        .font(.body)
+                } else {
+                    Text("None")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.bottom)
-                HStack {
-                    Text("+24")
-                        .font(.largeTitle)
-                        .fontDesign(.monospaced)
-                    Spacer()
-                }
-                Divider()
-                    .padding(.bottom)
-                VStack {
-                    ForEach(stand.updates) { upd in
-                        if let i = streams.findIndex(id: upd.ws.id) {
-                            WSPlanRowView(ws: $streams[i], stand: $stand)
-                        }
-                    }
-                }
-                Spacer()
             }
-            .padding(6)
+            .padding(.horizontal)
+            VStack(alignment: .leading, spacing: 48) {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("-24")
+                            .font(.largeTitle)
+                            .fontDesign(.monospaced)
+                        Spacer()
+                    }
+                    Divider()
+                        .padding(.bottom)
+                    VStack(alignment: .leading, spacing: 36) {
+                        ForEach(stand.prevDay) { upd in
+                            if let ws = workspace.streams.find(id: upd.ws.id) {
+                                WSUpdateRowView(stream: ws, stand: $stand)
+                            }
+                        }
+                    }
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("+24")
+                            .font(.largeTitle)
+                            .fontDesign(.monospaced)
+                        Spacer()
+                    }
+                    Divider()
+                        .padding(.bottom)
+                    VStack(alignment: .leading, spacing: 36) {
+                        ForEach(stand.today) { upd in
+                            if let i = workspace.streams.findIndex(
+                                id: upd.ws.id
+                            ) {
+                                WSPlanRowView(
+                                    stream: $workspace.streams[i],
+                                    stand: $stand
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            .padding()
         }
     }
 }
 
 #Preview {
     @Previewable @State var stand = Standup(.today)
-    @Previewable @State var streams: [Workstream] = []
-    EditStandScrollView(stand: $stand, streams: $streams)
+    @Previewable @State var workspace = Workspace()
+    EditStandScrollView(stand: $stand, workspace: $workspace)
         .padding()
         .frame(width: 700, height: 400)
         .onAppear {
@@ -63,18 +86,21 @@ struct EditStandScrollView: View {
             ws1.issueKey = "JWT-134"
             ws1.title = "Adding new columns to the beef view"
             
-            ws1.appendUpdate(
-                .today,
-                body: "Added a new column for the 'Flavor' column"
-            )
-            ws1.appendUpdate(
-                .today,
-                body: "Talked to mgr about how to make it easier to filter by flavor"
-            )
-            streams.append(ws1)
+//            ws1.appendUpdate(
+//                .today,
+//                body: "Added a new column for the 'Flavor' column"
+//            )
+//            ws1.appendUpdate(
+//                .today,
+//                body: "Talked to mgr about how to make it easier to filter by flavor"
+//            )
+            workspace.streams.append(ws1)
             var ws2 = Workstream()
             ws2.issueKey = "JWT-135"
             ws2.title = "Adding new flavors to the beef model"
-            streams.append(ws2)
+            workspace.streams.append(ws2)
+            
+//            stand.addWorkstream(ws1)
+//            stand.addWorkstream(ws2)
         }
 }
