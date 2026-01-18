@@ -96,7 +96,7 @@ struct UpdateGeneratorView: View {
     @Previewable @State var su = Standup.WorkstreamGenUpdate(Workstream())
     UpdateGeneratorView(
         update: $su,
-        prompt: wsUpdatePrompt(ws, ws.updates.all)
+        prompt: wsUpdatePrompt(ws, [], ws.updates)
     )
     .padding()
     .background(

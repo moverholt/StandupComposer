@@ -40,7 +40,9 @@ private let styleGuideBlock: Block = (
     [
         "Write brief, concise, readable, and friendly sentences.",
         "Do not use any temporal framing.",
-        "Do not use dashes or emdashes."
+        "Do not use dashes or emdashes.",
+        "Do not elaborate or extend the provided context.",
+        "Only write what is explicitly specified from the context."
     ]
 )
 
@@ -57,6 +59,7 @@ private func combine(_ blocks: [Block]) -> String {
 
 func wsUpdatePrompt(
     _ ws: Workstream,
+    _ completedPlans: [Workstream.Plan],
     _ updates: [Workstream.Update]
 ) -> String {
     var blocks: [Block] = []
@@ -73,17 +76,13 @@ func wsUpdatePrompt(
     ))
     
     blocks.append((
-        "Updates since previous standup",
-        updates.isEmpty ? [
-            "No recorded updates since previous standup"
-        ] : updates.map({ $0.body })
+        "Updates since last standup:",
+        updates.isEmpty ? ["None"] : updates.map({ $0.body })
     ))
     
     blocks.append((
-        "Plans completed since previous standup",
-        ws.plans.complete.isEmpty ? [
-            "No completed plans"
-        ] : ws.plans.complete.map({ $0.body })
+        "Plans completed since last standup:",
+        ws.plans.complete.isEmpty ? ["None"] : completedPlans.map({ $0.body })
     ))
 
     return combine(blocks)
@@ -91,10 +90,13 @@ func wsUpdatePrompt(
 
 #Playground {
     let ws = Workstream()
-    let prompt = wsUpdatePrompt(ws, ws.updates.all)
+    let _ = wsUpdatePrompt(ws, [], [])
 }
 
-func wsPlanPrompt(_ ws: Workstream) -> String {
+func wsPlanPrompt(
+    _ ws: Workstream,
+    _ plans: [Workstream.Plan]
+) -> String {
     var blocks: [Block] = []
     blocks.append(appBlock)
     blocks.append(domainBlock)
@@ -110,10 +112,8 @@ func wsPlanPrompt(_ ws: Workstream) -> String {
     ))
     
     blocks.append((
-        "Incomplete workstream plans",
-        ws.plans.incomplete.isEmpty ? [
-            "No incomplete plans"
-        ] : ws.plans.incomplete.map({ $0.body })
+        "Planned work:",
+        plans.incomplete.isEmpty ? ["None"] : plans.incomplete.map({ $0.body })
     ))
     
     return combine(blocks)
@@ -121,5 +121,5 @@ func wsPlanPrompt(_ ws: Workstream) -> String {
 
 #Playground {
     let ws = Workstream()
-    let prompt = wsPlanPrompt(ws)
+    let _ = wsPlanPrompt(ws, [])
 }

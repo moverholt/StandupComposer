@@ -20,7 +20,11 @@ struct WorkspaceStandupDetailView: View {
                         Task {
                             await runUpdate(
                                 index,
-                                prompt: wsUpdatePrompt(ws, ws.updates.all),
+                                prompt: wsUpdatePrompt(
+                                    ws,
+                                    ws.plans.completedForStand(stand.id),
+                                    ws.updates.forStand(stand.id)
+                                ),
                             )
                         }
                     }
@@ -32,7 +36,13 @@ struct WorkspaceStandupDetailView: View {
                 if let ws = workspace.streams.find(id: pln.ws.id) {
                     if let index = stand.today.findIndex(wsid: ws.id) {
                         Task {
-                            await runPlan(index, prompt: wsPlanPrompt(ws))
+                            await runPlan(
+                                index,
+                                prompt: wsPlanPrompt(
+                                    ws,
+                                    ws.plans.forStand(stand.id)
+                                )
+                            )
                         }
                     }
                 }
@@ -132,12 +142,6 @@ struct WorkspaceStandupDetailView: View {
             } else {
                 StandFormattedView(stand: stand)
             }
-//            VStack(alignment: .leading) {
-//                Text("Workstream update ids: \(stand.wsUpdates.count.formatted())")
-//                Text(stand.wsUpdates.map(\.uuidString).joined(separator: ","))
-//                    .foregroundStyle(.secondary)
-//                Text("Workstream plan ids: \(stand.wsPlans.count.formatted())")
-//            }
         }
     }
 }

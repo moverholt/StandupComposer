@@ -9,30 +9,34 @@ import SwiftUI
 
 struct WorkstreamPanelContentView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var model: Workstream
+    
+    @Binding var stream: Workstream
+    
     @State private var text = ""
     @State private var position = ScrollPosition(edge: .bottom)
     
     private func handleSubmit() {
-//        if text.isEmpty {
-//            return
-//        }
-//        model.appendUpdate(.today, body: text)
-//        text = ""
-//        position.scrollTo(edge: .bottom)
+        if text.isEmpty {
+            return
+        }
+        stream.appendUpdate(.today, body: text)
+        text = ""
+        position.scrollTo(edge: .bottom)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(model.title)
+                Text(stream.title)
                     .font(.title)
                     .textSelection(.enabled)
                 Spacer()
                 HStack {
                     Button(
                         action: {
-                            NSApp.appDelegate?.showWorkstreamInWorkspace(model.id)
+                            NSApp.appDelegate?.showWorkstreamInWorkspace(
+                                stream.id
+                            )
                             dismiss()
                         }
                     ) {
@@ -51,15 +55,16 @@ struct WorkstreamPanelContentView: View {
             }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
-//                    ForEach(model.daysWithLogItems) { day in
-//                        Text(day.formatted(style: .complete))
-//                            .font(.title2)
-//                            .foregroundStyle(.secondary)
-//                            .textSelection(.enabled)
-//                        Divider()
-//                            .padding(.bottom)
-//                        DayUpdates(updates: model.updatesByDay[day] ?? [])
-//                    }
+                    let days = stream.updatesByDay.keys.sorted()
+                    ForEach(days) { day in
+                        Text(day.formatted(style: .complete))
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                        Divider()
+                            .padding(.bottom)
+                        DayUpdates(updates: stream.updatesByDay[day] ?? [])
+                    }
                 }
             }
             .scrollPosition($position)
@@ -103,11 +108,11 @@ struct WorkstreamPanelContentView: View {
 }
 
 #Preview {
-    @Previewable @State var model = Workstream()
-    WorkstreamPanelContentView(model: $model)
+    @Previewable @State var stream = Workstream()
+    WorkstreamPanelContentView(stream: $stream)
         .frame(width: 400, height: 200)
         .onAppear{
-            model.appendUpdate(.yesterday, body: "I did some work!")
-            model.appendUpdate(.today, body: "I did some more work!")
+            stream.appendUpdate(.yesterday, body: "I did some work!")
+            stream.appendUpdate(.today, body: "I did some more work!")
         }
 }

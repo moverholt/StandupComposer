@@ -8,8 +8,8 @@
 import Foundation
 import SwiftUI
 
-@Observable
 @MainActor
+@Observable
 final class UserSettings {
     private let defaults = UserDefaults.standard
     

@@ -2,13 +2,11 @@ import SwiftUI
 
 struct WorkstreamUpdatesDay: View {
     let updates: [Workstream.Update]
+    let space: Workspace
     @Binding var stream: Workstream
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Updates")
-                .font(.title2)
-                .foregroundStyle(.secondary)
             VStack {
                 ForEach(updates) { upd in
                     VStack(alignment: .leading) {
@@ -18,7 +16,7 @@ struct WorkstreamUpdatesDay: View {
                             Spacer()
                             Menu {
                                 Button(role: .destructive) {
-                                    stream.deleteUpdate(upd)
+                                    stream.deleteUpdate(upd.id)
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
@@ -30,8 +28,11 @@ struct WorkstreamUpdatesDay: View {
                                     .contentShape(Rectangle())
                             }
                         }
-                        if let standId = upd.standId {
-                            Text("Standup ID: \(standId)")
+                        if let id = upd.standId {
+                            if let s = space.standupById[id] {
+                                Text(s.title)
+                                    .foregroundStyle(.tertiary)
+                            }
                         }
                     }
                     .padding()
@@ -52,10 +53,9 @@ struct WorkstreamUpdatesDay: View {
 
 #Preview {
     @Previewable @State var stream = Workstream()
-    let day = IsoDay.today
-
-    return WorkstreamUpdatesDay(
+    WorkstreamUpdatesDay(
         updates: stream.updatesByDay[.today] ?? [],
+        space: Workspace(),
         stream: $stream
     )
     .scenePadding()

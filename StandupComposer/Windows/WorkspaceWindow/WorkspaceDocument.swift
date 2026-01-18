@@ -8,7 +8,6 @@
 import Cocoa
 import SwiftUI
 
-// @MainActor
 @Observable
 final class WorkspaceDocumentModel {
     var workspace: Workspace
@@ -55,16 +54,11 @@ class WorkspaceDocument: NSDocument {
             )
             .environment(UserSettings.shared)
         )
-            
-        // ✅ Important: make sure the hosted view tracks window resizing
-//        hostingController.view.autoresizingMask = [.width, .height]
 
         cont.contentViewController = hostingController
         
-        // ✅ Set the initial window content size to your ideal
         if let window = cont.window {
             window.setContentSize(NSSize(width: 1000, height: 620))
-            // window.center() // optional
         }
     }
     
@@ -124,78 +118,78 @@ class WorkspaceDocument: NSDocument {
         from fileWrapper: FileWrapper,
         ofType typeName: String
     ) throws {
-        guard fileWrapper.isDirectory,
-              let children = fileWrapper.fileWrappers else {
-            throw CocoaError(.fileReadCorruptFile)
-        }
-        
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        var loadedWorkspaceMeta: Workspace.Meta? = nil
-        
-        // ---- Workspace.json (metadata: id, title, etc.) ----
-        if let workspaceWrapper = children["Workspace.json"],
-           let data = workspaceWrapper.regularFileContents {
-            do {
-                loadedWorkspaceMeta = try decoder
-                    .decode(Workspace.Meta.self, from: data)
-            } catch {
-                NSLog("Failed to decode Workspace.json: \(error)")
-                // fall back to default Workspace() if decode fails
+        try MainActor.assumeIsolated {
+            guard fileWrapper.isDirectory,
+                  let children = fileWrapper.fileWrappers else {
+                throw CocoaError(.fileReadCorruptFile)
             }
-        }
-        
-        if loadedWorkspaceMeta == nil {
-            Swift.print("No loaded workspace meta file!")
-            fatalError()
-        }
-        
-        // ---- Workstreams/ folder ----
-        var loadedWorkstreams: [Workstream] = []
-        
-        if let workstreamsWrapper = children["Workstreams"],
-           workstreamsWrapper.isDirectory,
-           let workstreamFiles = workstreamsWrapper.fileWrappers {
             
-            for (_, wrapper) in workstreamFiles {
-                guard let data = wrapper.regularFileContents else { continue }
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            var loadedWorkspaceMeta: Workspace.Meta? = nil
+            
+                // ---- Workspace.json (metadata: id, title, etc.) ----
+            if let workspaceWrapper = children["Workspace.json"],
+               let data = workspaceWrapper.regularFileContents {
                 do {
-                    let ws = try decoder.decode(Workstream.self, from: data)
-                    loadedWorkstreams.append(ws)
+                    loadedWorkspaceMeta = try decoder
+                        .decode(Workspace.Meta.self, from: data)
                 } catch {
-                    NSLog("Failed to decode workstream: \(error)")
+                    NSLog("Failed to decode Workspace.json: \(error)")
+                        // fall back to default Workspace() if decode fails
                 }
             }
-        }
-        
-        // ---- Standups/ folder ----
-        var loadedStandups: [Standup] = []
-        
-        if let standupsWrapper = children["Standups"],
-           standupsWrapper.isDirectory,
-           let standupFiles = standupsWrapper.fileWrappers {
             
-            for (_, wrapper) in standupFiles {
-                guard let data = wrapper.regularFileContents else { continue }
-                do {
-                    let st = try decoder.decode(Standup.self, from: data)
-                    loadedStandups.append(st)
-                } catch {
-                    NSLog("Failed to decode standup: \(error)")
+            if loadedWorkspaceMeta == nil {
+                Swift.print("No loaded workspace meta file!")
+                fatalError()
+            }
+            
+            // ---- Workstreams/ folder ----
+            var loadedWorkstreams: [Workstream] = []
+            
+            if let workstreamsWrapper = children["Workstreams"],
+               workstreamsWrapper.isDirectory,
+               let workstreamFiles = workstreamsWrapper.fileWrappers {
+                
+                for (_, wrapper) in workstreamFiles {
+                    guard let data = wrapper.regularFileContents else { continue }
+                    do {
+                        let ws = try decoder.decode(Workstream.self, from: data)
+                        loadedWorkstreams.append(ws)
+                    } catch {
+                        NSLog("Failed to decode workstream: \(error)")
+                    }
                 }
             }
-        }
-        
-        let workspace = Workspace(
-            meta: loadedWorkspaceMeta!,
-            streams: loadedWorkstreams,
-            stands: loadedStandups
-        )
-        
-        
-//        Task { @MainActor in
+            
+            // ---- Standups/ folder ----
+            var loadedStandups: [Standup] = []
+            
+            if let standupsWrapper = children["Standups"],
+               standupsWrapper.isDirectory,
+               let standupFiles = standupsWrapper.fileWrappers {
+                
+                for (_, wrapper) in standupFiles {
+                    guard let data = wrapper.regularFileContents else { continue }
+                    do {
+                        let st = try decoder.decode(Standup.self, from: data)
+                        loadedStandups.append(st)
+                    } catch {
+                        NSLog("Failed to decode standup: \(error)")
+                    }
+                }
+            }
+            
+            let workspace = Workspace(
+                meta: loadedWorkspaceMeta!,
+                streams: loadedWorkstreams,
+                stands: loadedStandups
+            )
+            
+            
             model = WorkspaceDocumentModel(workspace: workspace)
-//        }
+        }
     }
 }
 

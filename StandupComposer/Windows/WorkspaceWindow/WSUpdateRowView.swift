@@ -18,7 +18,11 @@ struct WSUpdateRowView: View {
     }
     
     private var updates: [Workstream.Update] {
-        stream.updates.forStandOrNoStand(stand.id)
+        stream.updates.forStand(stand.id)
+    }
+    
+    private var completedPlans: [Workstream.Plan] {
+        stream.plans.completedForStand(stand.id)
     }
 
     var body: some View {
@@ -38,40 +42,65 @@ struct WSUpdateRowView: View {
                     .padding(.bottom)
             }
             HStack(alignment: .top, spacing: 24) {
-                GroupBox(
-                    label: Label(
-                        "\(updates.count) New updates since last standup",
-                        systemImage: "clock"
-                    )
-                ) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if updates.isEmpty {
-                            Text("None")
-                        } else {
-                            ForEach(updates) { u in
-                                HStack {
-                                    Image(systemName: "circle.fill")
-                                        .font(.footnote)
-                                    Text(u.body)
-                                        .font(.title3)
+                VStack {
+                    GroupBox(
+                        label: Label(
+                            "Completed Since Last Standup",
+                            systemImage: "checkmark.circle"
+                        )
+                    ) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            if completedPlans.isEmpty {
+                                Text("None")
+                            } else {
+                                ForEach(completedPlans) { u in
+                                    HStack {
+                                        Image(systemName: "checkmark")
+                                            .font(.footnote)
+                                        Text(u.body)
+                                            .font(.title3)
+                                    }
                                 }
                             }
                         }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    HStack {
-                        Button(action: {
-                            ovm.showWorkstreamAddUpdate(
-                                stream.id,
-                                standId: stand.id
-                            )
-                        }) {
-                            Label("Add update", systemImage: "plus.circle")
+                    GroupBox(
+                        label: Label(
+                            "Updates Since Last Standup",
+                            systemImage: "clock"
+                        )
+                    ) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            if updates.isEmpty {
+                                Text("None")
+                            } else {
+                                ForEach(updates) { u in
+                                    HStack {
+                                        Image(systemName: "circle.fill")
+                                            .font(.footnote)
+                                        Text(u.body)
+                                            .font(.title3)
+                                    }
+                                }
+                            }
                         }
-                        .buttonStyle(.borderless)
-                        .controlSize(.small)
-                        Spacer()
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        HStack {
+                            Button(action: {
+                                ovm.showWorkstreamAddUpdate(
+                                    stream.id,
+                                    standId: stand.id
+                                )
+                            }) {
+                                Label("Add update", systemImage: "plus.circle")
+                            }
+                            .buttonStyle(.borderless)
+                            .controlSize(.small)
+                            Spacer()
+                        }
                     }
                 }
                 if let i = streamUpdateIndex {
@@ -83,7 +112,11 @@ struct WSUpdateRowView: View {
                     ) {
                         UpdateGeneratorView(
                             update: $stand.prevDay[i],
-                            prompt: wsUpdatePrompt(stream, updates)
+                            prompt: wsUpdatePrompt(
+                                stream,
+                                completedPlans,
+                                updates,
+                            )
                         )
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                     }

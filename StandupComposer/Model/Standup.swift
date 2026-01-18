@@ -32,12 +32,9 @@ struct Standup: Codable, Identifiable {
     let created: Date
     var updated: Date
     
-//    var wsUpdates: [Workstream.Update.ID]
-//    var wsPlans: [Workstream.Plan.ID]
-    
     var prevDay: [WorkstreamGenUpdate]
     var today: [WorkstreamGenUpdate]
-    var deleted: Bool = false
+    
     private(set) var status: Status = .edit
     
     init(_ day: IsoDay) {
@@ -53,8 +50,6 @@ struct Standup: Codable, Identifiable {
         updated = now
         prevDay = []
         today = []
-//        wsUpdates = []
-//        wsPlans = []
     }
     
     var editing: Bool { status == .edit }
@@ -88,26 +83,12 @@ extension [Standup] {
         firstIndex(where: { $0.id == id })
     }
     
-    func first(day: IsoDay) -> Standup? {
-        first(where: { $0.day == day })
-    }
-    
-    var available: [Standup] {
-        notDeleted
+    var editing: [Standup] {
+        filter({ $0.status == .edit })
     }
     
     var published: [Standup] {
-        notDeleted.filter({ $0.status == .published })
-    }
-    
-    private var notDeleted: [Standup] {
-        self.filter({ $0.deleted == false })
-    }
-    
-    var sortByUpdatedDesc: [Standup] {
-        self.sorted { lhs, rhs in
-            lhs.created > rhs.created
-        }
+        filter({ $0.status == .published })
     }
 }
 

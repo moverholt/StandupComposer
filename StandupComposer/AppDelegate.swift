@@ -18,7 +18,6 @@ extension NSApplication {
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var statusMenu: NSMenu!
-//    @IBOutlet var wsDocCont: WorkspaceDocumentController!
     
     private var settings = UserSettings.shared
     
@@ -38,18 +37,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         registerGlobalHotKey()
         installHotKeyHandler()
         
-//        if let controller = self.wsDocCont {
-//            Task { @MainActor in // QUESTION: Does this have to be main actor?
-//                let _ = await controller.openLastWorkspaceIfPossible()
-//            }
-//        }
-        
         dayChangeObserver = NotificationCenter.default.addObserver(
             forName: .NSCalendarDayChanged,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             self?.updateStatusItemImage()
+        }
+        Task {
+            populateStatusMenu()
         }
     }
     
@@ -67,7 +63,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     var currWSDoc: WorkspaceDocument? {
-        //        return wsDocCont.currentWorkspace
         let doc = NSDocumentController.shared.documents.first as? WorkspaceDocument
         return doc
     }
@@ -188,7 +183,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             eventKind: UInt32(kEventHotKeyPressed)
         )
         
-            // Pass a raw pointer to self into the Carbon callback
+        // Pass a raw pointer to self into the Carbon callback
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         
         InstallEventHandler(

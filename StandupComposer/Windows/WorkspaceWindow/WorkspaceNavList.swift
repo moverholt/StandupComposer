@@ -23,18 +23,18 @@ struct WorkspaceNavList: View {
                     Text(ws.description)
                         .tag(WorkspaceSelected.workstream(ws.id))
                 }
-            }
-            .listSectionSeparator(.visible)
-            Section("Create") {
-                Label("New Standup", systemImage: "square.and.pencil")
-                    .tag(WorkspaceSelected.newStandup)
                 Label("New Workstream", systemImage: "water.waves")
                     .tag(WorkspaceSelected.newWorkstream)
             }
             .listSectionSeparator(.visible)
             Section("Standups") {
+                if !workspace.isEditingStandup {
+                    Label("New Standup", systemImage: "square.and.pencil")
+                        .tag(WorkspaceSelected.newStandup)
+                        .disabled(true)
+                }
                 ForEach(
-                    workspace.stands.available.sorted { $0.updated > $1.updated }
+                    workspace.stands.sorted { $0.updated > $1.updated }
                 ) { st in
                     Label(
                         st.title,

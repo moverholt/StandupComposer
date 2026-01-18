@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct WSPlanRowView: View {
-    @Binding var stream: Workstream
+    @Environment(WorkspaceOverlayViewModel.self) var ovm
+    
+    let stream: Workstream
+    
     @Binding var stand: Standup
 
-    @State private var planText: String = ""
-    
     private var wsPlanIndex: Int? {
         stand.today.findIndex(wsid: stream.id)
+    }
+    
+    private var plans: [Workstream.Plan] {
+        stream.plans.forStand(stand.id)
     }
 
     var body: some View {
@@ -41,10 +46,10 @@ struct WSPlanRowView: View {
                     )
                 ) {
                     VStack(alignment: .leading, spacing: 6) {
-                        if stream.plans.incomplete.isEmpty {
+                        if plans.incomplete.isEmpty {
                             Text("None")
                         } else {
-                            ForEach(stream.plans.incomplete) { u in
+                            ForEach(plans.incomplete) { u in
                                 HStack {
                                     Image(systemName: "circle.fill")
                                         .font(.footnote)
@@ -57,12 +62,14 @@ struct WSPlanRowView: View {
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     HStack {
-                        Button(action: {
-                                //                        ovm.showWorkstreamAddUpdate(
-                                //                            stream.id,
-                                //                            standId: stand.id
-                                //                        )
-                        }) {
+                        Button(
+                            action: {
+                                ovm.showWorkstreamAddPlan(
+                                    stream.id,
+                                    standId: stand.id
+                                )
+                            }
+                        ) {
                             Label("Add plan", systemImage: "plus.circle")
                         }
                         .buttonStyle(.borderless)
@@ -79,7 +86,7 @@ struct WSPlanRowView: View {
                     ) {
                         UpdateGeneratorView(
                             update: $stand.today[i],
-                            prompt: wsPlanPrompt(stream)
+                            prompt: wsPlanPrompt(stream, plans)
                         )
                         .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
@@ -98,9 +105,10 @@ struct WSPlanRowView: View {
         return w
     }()
 
-    WSPlanRowView(stream: $ws, stand: $stand)
+    WSPlanRowView(stream: ws, stand: $stand)
         .padding()
         .frame(width: 600)
+        .environment(WorkspaceOverlayViewModel())
         .onAppear {
             stand.addWorkstream(ws)
         }

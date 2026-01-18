@@ -13,22 +13,6 @@ struct EditStandScrollView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
-                HStack {
-                    Text("Last standup")
-                        .font(.headline)
-                    Spacer()
-                }
-                if let ps = workspace.previousStandup {
-                    Text(ps.title)
-                        .font(.body)
-                } else {
-                    Text("None")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal)
             VStack(alignment: .leading, spacing: 48) {
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
@@ -58,13 +42,8 @@ struct EditStandScrollView: View {
                         .padding(.bottom)
                     VStack(alignment: .leading, spacing: 36) {
                         ForEach(stand.today) { upd in
-                            if let i = workspace.streams.findIndex(
-                                id: upd.ws.id
-                            ) {
-                                WSPlanRowView(
-                                    stream: $workspace.streams[i],
-                                    stand: $stand
-                                )
+                            if let ws = workspace.streams.find(id: upd.ws.id) {
+                                WSPlanRowView(stream: ws, stand: $stand)
                             }
                         }
                     }

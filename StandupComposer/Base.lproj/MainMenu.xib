@@ -685,13 +685,13 @@
         </menu>
         <menu title="Status Menu" id="tit-He-2iD" userLabel="Status Menu">
             <items>
-                <menuItem title="Open Update Bar" keyEquivalent="j" identifier="00" id="pP7-pR-8F8">
+                <menuItem title="Open Update Bar" keyEquivalent="j" id="pP7-pR-8F8">
                     <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                     <connections>
                         <action selector="handleOpenUpdateBar:" target="Voe-Tx-rLC" id="JAp-kL-n4x"/>
                     </connections>
                 </menuItem>
-                <menuItem title="New Standup" identifier="00" id="jZK-Nw-omF">
+                <menuItem title="New Standup" id="jZK-Nw-omF">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="handleNewStandup:" target="Voe-Tx-rLC" id="Lfu-VR-W4F"/>

@@ -8,7 +8,11 @@
 import SwiftUI
 
 struct WorkspaceWorkstreamInspectorView: View {
+    @Environment(UserSettings.self) var settings
     @Binding var stream: Workstream
+    @Binding var space: Workspace
+    
+    @State private var showConfirm = false
     
     var body: some View {
         Form {
@@ -57,8 +61,22 @@ struct WorkspaceWorkstreamInspectorView: View {
                     Text(stream.updated.formatted())
                 }
             }
-            Section("Status") {
-                Toggle("Deleted", isOn: $stream.deleted)
+            Button(role: .destructive) {
+                showConfirm = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            .confirmationDialog(
+                "Are you sure you want to delete this?",
+                isPresented: $showConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    space.deleteWorkstream(stream.id)
+                    settings.workspaceSelected = .none
+                }
+                Button("Cancel", role: .cancel) {
+                }
             }
         }
     }
@@ -66,5 +84,7 @@ struct WorkspaceWorkstreamInspectorView: View {
 
 #Preview {
     @Previewable @State var stream = Workstream()
-    WorkspaceWorkstreamInspectorView(stream: $stream)
+    @Previewable @State var space = Workspace()
+    WorkspaceWorkstreamInspectorView(stream: $stream, space: $space)
+        .environment(UserSettings())
 }

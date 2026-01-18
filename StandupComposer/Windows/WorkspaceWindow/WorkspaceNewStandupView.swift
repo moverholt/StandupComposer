@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct WorkspaceNewStandupView: View {
-    @Binding var workspace: Workspace
-    @State private var title: String = "New Standup"
     @Environment(UserSettings.self) var settings
+    @Environment(WorkspaceOverlayViewModel.self) private var ovm
+    @Binding var workspace: Workspace
+    
+    @State private var title: String = "New Standup"
     
     private func handleSubmit() {
         let stand = workspace.createStandup(title)
@@ -27,86 +29,45 @@ struct WorkspaceNewStandupView: View {
                 header: Text("New Standup")
             ) {
                 TextField("Title", text: $title)
-                if let prev = workspace.previousStandup {
-                    HStack {
-                        Text("Last Standup")
-                        Spacer()
-                        Text(prev.title)
-                            .foregroundStyle(.secondary)
+            }
+            if workspace.streams.isEmpty {
+                Text("No Active Workstreams")
+                    .foregroundStyle(.primary)
+                    .italic()
+            } else {
+                Section {
+                    Text("-24")
+                        .font(.largeTitle)
+                    ForEach(workspace.streams.active) { stream in
+                        StreamHeaderView(stream: stream)
+                        if let i = workspace.streams.findIndex(id: stream.id) {
+                            Prev24StreamView(stream: $workspace.streams[i])
+                                .padding(.bottom)
+                        }
                     }
                 }
-            }
-            Section(
-                header: Text(
-                    "Active workstreams to be included in this standup"
-                )
-            ) {
-                if workspace.streams.isEmpty {
-                    Text("No Active Workstreams")
-                        .foregroundStyle(.primary)
-                        .italic()
-                } else {
-                    VStack(alignment: .leading, spacing: 24) {
-                        ForEach(workspace.streams.active) { stream in
-                            VStack {
-                                HStack {
-                                    if let key = stream.issueKey {
-                                        Text("[\(key)]")
-                                            .font(.footnote)
-                                            .fontDesign(.monospaced)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Text(stream.title)
-                                        .font(.title)
-                                }
-                            }
-                            let updates = stream.updates.noStandup
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Updates since previous standup")
-                                    .font(.headline)
-                                    .foregroundStyle(.secondary)
-                                if updates.isEmpty {
-                                    Text("None")
-                                } else {
-                                    ForEach(updates) { upd in
-                                        HStack {
-                                            Image(systemName: "circle.fill")
-                                                .font(.footnote)
-                                            Text(upd.body)
-                                                .font(.title3)
-                                        }
-                                    }
-                                }
-                            }
-//                            let completed = stream.plans.completedSince(
-//                                workspace.previousStandup
-//                            )
-//                            VStack(alignment: .leading, spacing: 12) {
-//                                Text("Plans completed since last standup")
-//                                    .font(.headline)
-//                                    .foregroundStyle(.secondary)
-//                                if completed.isEmpty {
-//                                    Text("None")
-//                                } else {
-//                                    ForEach(completed) { pln in
-//                                        HStack {
-//                                            Image(systemName: "circle.fill")
-//                                                .font(.footnote)
-//                                            Text(pln.body)
-//                                                .font(.title3)
-//                                        }
-//                                    }
-//                                }
-//                            }
+                Section {
+                    Text("+24")
+                        .font(.largeTitle)
+                    ForEach(workspace.streams.active) { stream in
+                        StreamHeaderView(stream: stream)
+                        if let i = workspace.streams.findIndex(id: stream.id) {
+                            Next24StreamView(stream: $workspace.streams[i])
+                                .padding(.bottom)
                         }
                     }
                 }
             }
-            Button("Create", action: handleSubmit)
-                .disabled(createDisabled)
-                .buttonStyle(.borderedProminent)
         }
         .formStyle(.grouped)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: handleSubmit) {
+                    Image(systemName: "square.and.pencil")
+                }
+                .disabled(createDisabled)
+            }
+        }
         .onSubmit {
             handleSubmit()
         }
@@ -116,25 +77,46 @@ struct WorkspaceNewStandupView: View {
     }
 }
 
+extension WorkspaceNewStandupView {
+    
+    struct StreamHeaderView: View {
+        let stream: Workstream
+        
+        var body: some View {
+            VStack {
+                HStack(alignment: .top) {
+                    Text(stream.title)
+                        .font(.title)
+                    Spacer()
+                    if let key = stream.issueKey {
+                        Text("[\(key)]")
+                            .font(.footnote)
+                            .fontDesign(.monospaced)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+        }
+    }
+}
+
 #Preview {
     @Previewable @State var workspace = Workspace()
     WorkspaceNewStandupView(workspace: $workspace)
         .environment(UserSettings())
+        .environment(WorkspaceOverlayViewModel())
+        .frame(width: 400, height: 600)
         .onAppear {
             var ws1 = Workstream()
             ws1.title = "Add new cheeses to the cheese menu"
             ws1.issueKey = "FOOD-10"
-            var ws2 = Workstream()
-            ws2.title = "Add new sausages to the sausage menu"
-            ws2.issueKey = "FOOD-20"
-            var ws3 = Workstream()
-            ws3.title = "Add new pizza to the pizza menu"
-            ws3.issueKey = "FOOD-30"
             
             ws1.appendUpdate(.today, body: "Met with product manager")
+            ws1.appendPlan("Plan 1")
             
             workspace.streams.append(ws1)
-            workspace.streams.append(ws2)
-            workspace.streams.append(ws3)
+            
         }
 }
+

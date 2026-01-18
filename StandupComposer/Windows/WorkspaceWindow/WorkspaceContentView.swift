@@ -15,44 +15,12 @@ enum WorkspaceSelected: Codable, Hashable {
     case none
 }
 
-@Observable
-class WorkspaceOverlayViewModel {
-    var showOverlay = false
-    var text: String = ""
-    
-    var workstreamAddUpdateId: Workstream.ID?
-    var workstreamAddUpdateStandId: Standup.ID?
-    
-    func close() {
-        workstreamAddUpdateId = nil
-        workstreamAddUpdateStandId = nil
-        showOverlay = false
-        text = ""
-    }
-    
-    func showWorkstreamAddUpdate(
-        _ id: Workstream.ID,
-        standId: Standup.ID?
-    ) {
-        if workstreamAddUpdateId == id {
-            close()
-            return
-        }
-        workstreamAddUpdateId = id
-        workstreamAddUpdateStandId = standId
-        if !showOverlay {
-            showOverlay = true
-        }
-    }
-}
-
 struct WorkspaceContentView: View {
     @Binding var workspace: Workspace
     @Environment(UserSettings.self) var settings
 
     @State private var ovm = WorkspaceOverlayViewModel()
     @State private var showInspector = false
-    @FocusState private var quickInputFocused: Bool
     
     private var selected: WorkspaceSelected {
         settings.workspaceSelected
@@ -88,6 +56,12 @@ struct WorkspaceContentView: View {
                 body: ovm.text,
                 standId: ovm.workstreamAddUpdateStandId
             )
+        } else if let id = ovm.workstreamAddPlanId {
+            workspace.addWorkstreamPlan(
+                id: id,
+                body: ovm.text,
+                standId: ovm.workstreamAddPlanStandId
+            )
         }
         ovm.close()
     }
@@ -112,6 +86,7 @@ struct WorkspaceContentView: View {
                     WorkspaceNewStandupView(workspace: $workspace)
                 } else if let index = selectedWorkstreamIndex {
                     WorkspaceWorkstreamDetailView(
+                        space: workspace,
                         stream: $workspace.streams[index]
                     )
                 } else if let index = selectedStandupIndex {
@@ -127,50 +102,14 @@ struct WorkspaceContentView: View {
             .overlay(alignment: .bottomTrailing) {
                 Group {
                     if ovm.showOverlay {
-                        VStack(spacing: 8) {
-                            if let id = ovm.workstreamAddUpdateId {
-                                Text(id.uuidString)
+                        WorkspaceQuickInputOverlay(
+                            onSubmit: {
+                                submitOverlay()
                             }
-                            TextField("Quick input…", text: $ovm.text)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(minWidth: 280)
-                                .focused($quickInputFocused)
-                                .onSubmit {
-                                    submitOverlay()
-                                }
-                            HStack {
-                                Button("Cancel") {
-                                    ovm.close()
-                                }
-                                Spacer()
-                                Button("Add") {
-                                    submitOverlay()
-                                }
-                                .keyboardShortcut(.defaultAction)
-                                .disabled(
-                                    ovm.text.trimmingCharacters(
-                                        in: .whitespacesAndNewlines
-                                    ).isEmpty
-                                )
-                            }
-                        }
-                        .padding(12)
-                        .background(
-                            .regularMaterial,
-                            in: RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
                         )
-                        .shadow(radius: 12)
-                        .padding()
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
                 .animation(.default, value: ovm.showOverlay)
-            }
-            .onChange(of: ovm.showOverlay) { isShown in
-                quickInputFocused = isShown
             }
         }
         .inspector(
@@ -178,14 +117,16 @@ struct WorkspaceContentView: View {
             content: {
                 if let index = selectedWorkstreamIndex {
                     WorkspaceWorkstreamInspectorView(
-                        stream: $workspace.streams[index]
+                        stream: $workspace.streams[index],
+                        space: $workspace
                     )
                 } else if let index = selectedStandupIndex {
                     WorkspaceStandupInspectorView(
-                        stand: $workspace.stands[index]
+                        stand: $workspace.stands[index],
+                        space: $workspace
                     )
                 } else {
-                    Text("Select Workstream")
+                    EmptyView()
                 }
             }
         )

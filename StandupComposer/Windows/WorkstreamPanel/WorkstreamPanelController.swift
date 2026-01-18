@@ -20,7 +20,7 @@ class WorkstreamPanelController: NSWindowController {
         panel.backgroundColor = .clear
         
         let hostingController = NSHostingController(
-            rootView: WorkstreamPanelContentView(model: stream)
+            rootView: WorkstreamPanelContentView(stream: stream)
         )
         self.contentViewController = hostingController
     }

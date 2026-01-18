@@ -35,8 +35,12 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
     
     var description: String { meta.title }
     
-    var previousStandup: Standup? {
-        stands.published.max { $0.created < $1.created }
+    var editingStandup: Standup? { stands.editing.last }
+    
+    var isEditingStandup: Bool { editingStandup != nil }
+    
+    var standupById: [Standup.ID: Standup] {
+        Dictionary(uniqueKeysWithValues: stands.map { ($0.id, $0) })
     }
     
     mutating func publish(standId id: Standup.ID) {
@@ -53,9 +57,22 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
         standId: Standup.ID?
     ) {
         guard let index = streams.findIndex(id: id) else { return }
-        var update = Workstream.Update(day: .today, body: body)
+        var update = Workstream.Update(.today, body: body)
         update.standId = standId
         streams[index].updates.append(update)
+    }
+    
+    mutating func addWorkstreamPlan(
+        id: Workstream.ID,
+        body: String,
+        standId: Standup.ID?
+    ) {
+        guard let index = streams.findIndex(id: id) else { return }
+        var plan = Workstream.Plan(.today, body: body)
+        if let id = standId {
+            plan.standIds.append(id)
+        }
+        streams[index].plans.append(plan)
     }
     
     mutating func createStandup(_ title: String) -> Standup {
@@ -68,39 +85,37 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
             let pln = Standup.WorkstreamGenUpdate(stream)
             stand.today.append(pln)
             
-            if let ps = previousStandup {
-                for upd in stream.updates.noStandup {
-                    if let i2 = stream.updates.findIndex(id: upd.id) {
-                        streams[i].updates[i2].standId = stand.id
-                    }
+            for upd in stream.updates.noStandup {
+                if let i2 = stream.updates.findIndex(id: upd.id) {
+                    streams[i].updates[i2].standId = stand.id
                 }
-//                for pln in stream.plans.completedSince(ps) {
-//                    stand.wsPlans.append(pln.id)
-//                }
-            } else {
-                for upd in stream.updates.noStandup {
-                    if let i2 = stream.updates.findIndex(id: upd.id) {
-                        streams[i].updates[i2].standId = stand.id
-                    }
+            }
+            
+            for pln in stream.plans.complete.noCompletedStandId {
+                if let i2 = stream.plans.findIndex(id: pln.id) {
+                    streams[i].plans[i2].completedStandId = stand.id
                 }
-//                for pln in stream.plans.incomplete {
-//                    stand.wsPlans.append(pln.id)
-//                }
+            }
+            
+            for pln in stream.plans.incomplete {
+                if let i2 = stream.plans.findIndex(id: pln.id) {
+                    streams[i].plans[i2].standIds.append(stand.id)
+                }
             }
         }
         stands.append(stand)
         return stand
     }
+
+    mutating func deleteStand(_ id: Standup.ID) {
+        guard let index = stands.findIndex(id: id) else { return }
+        stands.remove(at: index)
+    }
     
-    
-//    func workstreamUpdatesNotInStandup(
-//        _ streamId: Workstream.ID
-//    ) -> [Workstream.Update] {
-//        guard let ws = streams.find(id: streamId) else {
-//            return []
-//        }
-//        ws.updates.noStandup
-//    }
+    mutating func deleteWorkstream(_ id: Workstream.ID) {
+        guard let index = streams.findIndex(id: id) else { return }
+        streams.remove(at: index)
+    }
 }
 
 #Playground {
@@ -109,10 +124,10 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
     ws1.title = "Add pasta types"
     ws1.appendUpdate(.today, body: "I did something")
     
-    var pl1 = Workstream.Plan(.today, body: "I will do something")
+    let pl1 = Workstream.Plan(.today, body: "I will do something")
     ws1.plans.append(pl1)
     
     space.streams.append(ws1)
     
-    let stand = space.createStandup("Today's Standup")
+    let _ = space.createStandup("Today's Standup")
 }

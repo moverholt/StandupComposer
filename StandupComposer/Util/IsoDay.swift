@@ -117,14 +117,6 @@ struct IsoDay: Identifiable, CustomStringConvertible, Codable, Equatable, Compar
         return d
     }
     
-    var week: IsoWeek {
-        IsoWeek(self)
-    }
-    
-    var lastWeek: IsoWeek {
-        subWeeks(1).week
-    }
-    
     var start: Date {
         Calendar.current.startOfDay(for: self.date)
     }
@@ -156,57 +148,6 @@ struct IsoDay: Identifiable, CustomStringConvertible, Codable, Equatable, Compar
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(formatted)
-    }
-}
-
-struct IsoWeek: Identifiable {
-    let mon: IsoDay
-    let tue: IsoDay
-    let wed: IsoDay
-    let thu: IsoDay
-    let fri: IsoDay
-    let sat: IsoDay
-    let sun: IsoDay
-    
-    var all: [IsoDay] { [mon, tue, wed, thu, fri, sat, sun] }
-    var start: IsoDay { mon }
-    var end: IsoDay { sun }
-    
-    var id: String {
-        "\(mon)-\(sun)"
-    }
-    
-    init (_ dayInWeek: IsoDay) {
-        let mon = dayInWeek.thisWeekMonday
-        let tue = mon.addDays(1)
-        let wed = mon.addDays(2)
-        let thu = mon.addDays(3)
-        let fri = mon.addDays(4)
-        let sat = mon.addDays(5)
-        let sun = mon.addDays(6)
-        self.init((mon, tue, wed, thu, fri, sat, sun))
-    }
-    
-    init(_ tup: (mon: IsoDay, tue: IsoDay, wed: IsoDay, thu: IsoDay, fri: IsoDay, sat: IsoDay, sun: IsoDay)) {
-        mon = tup.mon
-        tue = tup.tue
-        wed = tup.wed
-        thu = tup.thu
-        fri = tup.fri
-        sat = tup.sat
-        sun = tup.sun
-    }
-    
-    static var thisWeek: IsoWeek {
-        IsoDay.today.week
-    }
-    
-    static var lastWeek: IsoWeek {
-        IsoDay.today.lastWeek
-    }
-    
-    static func last(weeks num: Int) -> [IsoWeek] {
-        (0..<num).map { IsoDay.today.subWeeks($0).week }
     }
 }
 
