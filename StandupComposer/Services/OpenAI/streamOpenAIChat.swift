@@ -15,6 +15,7 @@ private struct OpenAIStreamEvent: Decodable {
 
 func streamOpenAIChat(prompt: String) -> AsyncThrowingStream<String, Error> {
     let key = UserSettings.shared.openAIApiKey ?? "no-key"
+    let host = UserSettings.shared.openAIApiUrl
     let config = OpenAIConfig(apiKey: key)
     
     struct RequestBody: Encodable {
@@ -28,7 +29,7 @@ func streamOpenAIChat(prompt: String) -> AsyncThrowingStream<String, Error> {
         let stream: Bool
     }
     
-    let url = URL(string: "https://api.openai.com/v1/responses")!
+    let url = URL(string: "\(host)/responses")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")

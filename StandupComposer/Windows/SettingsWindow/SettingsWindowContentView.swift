@@ -26,6 +26,19 @@ struct SettingsWindowContentView: View {
                         }
                     )
                 )
+                TextField(
+                    "API Host",
+                    text: Binding(
+                        get: { settings.openAIApiUrl },
+                        set: {
+                            if $0.isEmpty {
+                                settings.openAIApiUrl = UserSettings.defaultOpenAIHost
+                            } else {
+                                settings.openAIApiUrl = $0
+                            }
+                        }
+                    )
+                )
             }
         }
         .frame(

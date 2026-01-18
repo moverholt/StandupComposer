@@ -15,24 +15,31 @@ final class UserSettings {
     
     static let shared = UserSettings()
     
+    static let defaultOpenAIHost = "https://api.openai.com/v1"
+    
     // MARK: - Keys
     
     private enum Keys: String {
-        case workspaceSelected = "Settings.workspaceSelected"
         case openAIApiKey = "Settings.openAIApiKey"
+        case openAIApiUrl = "Settings.openAIApiUrl"
+        case workspaceSelected = "Settings.workspaceSelected"
         case workspaceColumnVisibility = "Settings.workspaceColumnVisibility"
     }
 
     // MARK: - Stored Properties
     
-    var workspaceSelected: WorkspaceSelected = .none {
-        didSet { saveWorkspaceSelected() }
-    }
-    
     var openAIApiKey: String? = nil {
         didSet { saveOpenAIApiKey() }
     }
     
+    var openAIApiUrl: String = defaultOpenAIHost {
+        didSet { saveOpenAIApiUrl() }
+    }
+    
+    var workspaceSelected: WorkspaceSelected = .none {
+        didSet { saveWorkspaceSelected() }
+    }
+
     var workspaceColumnVisibility: NavigationSplitViewVisibility = .all {
         didSet { saveWorkspaceColumnVisibility() }
     }
@@ -40,19 +47,24 @@ final class UserSettings {
     // MARK: - Init
     
     init() {
-        loadWorkspaceSelected()
         loadOpenAIApiKey()
+        loadOpenAIApiUrl()
+        loadWorkspaceSelected()
         loadWorkspaceColumnVisibility()
     }
 
     // MARK: - Persistence
     
-    private func saveWorkspaceSelected() {
-        saveKey(workspaceSelected, for: .workspaceSelected)
-    }
-    
     private func saveOpenAIApiKey() {
         saveKey(openAIApiKey, for: .openAIApiKey)
+    }
+    
+    private func saveOpenAIApiUrl() {
+        saveKey(openAIApiUrl, for: .openAIApiUrl)
+    }
+    
+    private func saveWorkspaceSelected() {
+        saveKey(workspaceSelected, for: .workspaceSelected)
     }
     
     private func saveWorkspaceColumnVisibility() {
@@ -74,6 +86,10 @@ final class UserSettings {
     private func loadOpenAIApiKey() {
         self.openAIApiKey = loadKey(.openAIApiKey) ?? ""
         
+    }
+    
+    private func loadOpenAIApiUrl() {
+        self.openAIApiUrl = loadKey(.openAIApiUrl) ?? Self.defaultOpenAIHost
     }
     
     private func loadWorkspaceSelected() {
