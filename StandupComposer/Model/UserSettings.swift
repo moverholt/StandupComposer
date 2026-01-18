@@ -15,7 +15,7 @@ final class UserSettings {
     
     static let shared = UserSettings()
     
-    static let defaultOpenAIHost = "https://api.openai.com/v1"
+    static let defaultOpenAIHost = "https://api.openai.com"
     
     // MARK: - Keys
     
@@ -85,7 +85,6 @@ final class UserSettings {
 
     private func loadOpenAIApiKey() {
         self.openAIApiKey = loadKey(.openAIApiKey) ?? ""
-        
     }
     
     private func loadOpenAIApiUrl() {

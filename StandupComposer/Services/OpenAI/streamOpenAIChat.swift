@@ -29,7 +29,7 @@ func streamOpenAIChat(prompt: String) -> AsyncThrowingStream<String, Error> {
         let stream: Bool
     }
     
-    let url = URL(string: "\(host)/responses")!
+    let url = URL(string: "\(host)/v1/responses")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")

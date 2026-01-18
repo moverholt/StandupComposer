@@ -41,7 +41,7 @@ func streamOpenAIChatWithStructuredOutput<T: Decodable>(
     let host = UserSettings.shared.openAIApiUrl
     let config = OpenAIConfig(apiKey: key)
     
-    let url = URL(string: "\(host)/responses")!
+    let url = URL(string: "\(host)/v1/responses")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
