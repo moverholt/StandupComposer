@@ -13,25 +13,24 @@ private typealias Block = (title: String, content: [String])
 private let appBlock: Block = (
     "Application Details",
     [
-        "Name: StandupComposer",
-        "This app has 2 types of AI agents.",
-        "1. Writing Agent",
-        "2. Publishing Agent"
+        "Application Name: StandupComposer",
+        "AI Agent Types: This application uses 2 distinct AI agents to process standup content.",
+        "1. Writing Agent: Generates AI summaries for standup sections from workstream updates and plans.",
+        "2. Publishing Agent: Formats and publishes standup content to external systems."
     ]
 )
 
 private let domainBlock: Block = (
-    "Domain Details",
+    "Domain Dictionary",
     [
         "Below is a dictionary of terms used by this application",
-        "1. Workspace",
-        "2. Workstream",
-        "3. Workstream Update",
-        "4. Workstream Plan",
-        "5. Standup",
-        "6. Standup Update",
-        "-24",
-        "+24"
+        "1. Workspace: Top level container for workstreams and standups.",
+        "2. Workstream: Project or task that tracks work with updates and plans.",
+        "3. Workstream Update: Developer note about completed work on a workstream.",
+        "4. Workstream Plan: Planned task or goal for a workstream.",
+        "5. Standup: Daily document with prevDay (-24) and today (+24) sections summarizing work.",
+        "6. -24: Previous 24 hours section with AI generated summaries of completed work.",
+        "7. +24: Next 24 hours section with AI generated summaries of planned work."
     ]
 )
 
@@ -39,10 +38,17 @@ private let styleGuideBlock: Block = (
     "Writing Style Guide",
     [
         "Write brief, concise, readable, and friendly sentences.",
-        "Do not use any temporal framing.",
-        "Do not use dashes or emdashes.",
-        "Do not elaborate or extend the provided context.",
-        "Only write what is explicitly specified from the context."
+        "Do not use temporal framing or dashes."
+    ]
+)
+
+private let editingStyleBlock: Block = (
+    "Summarization Style",
+    [
+        "Summarize only the content explicitly provided in the context.",
+        "Do not add information beyond what is specified.",
+        "Condense multiple related items into coherent sentences.",
+        "Focus on the essential information that communicates the workstream's status."
     ]
 )
 
@@ -66,23 +72,26 @@ func wsUpdatePrompt(
     blocks.append(appBlock)
     blocks.append(domainBlock)
     blocks.append(styleGuideBlock)
+    blocks.append(editingStyleBlock)
     blocks.append((
         "Writing Agent Assignment",
         [
-            "You are StandupComposer writing agent.",
-            "Write an update (-24) for the workstream: \(ws.title)",
-            "Use notes the deceloper recorded as workstream updates to generate few sentences that will help the publishing agent understand the workstream's previous 24."
+            "Role: You are the StandupComposer Writing Agent.",
+            "Task: Generate a summary update for the -24 section of a standup.",
+            "Target Workstream: \(ws.title)",
+            "Input Sources: Use the workstream updates and completed plans provided below.",
+            "Output Goal: Create a concise summary that communicates what happened in this workstream during the previous 24 hours."
         ]
     ))
     
     blocks.append((
-        "Updates since last standup:",
-        updates.isEmpty ? ["None"] : updates.map({ $0.body })
+        "Input Data: Workstream Updates",
+        updates.isEmpty ? ["No updates available."] : updates.map({ $0.body })
     ))
     
     blocks.append((
-        "Plans completed since last standup:",
-        ws.plans.complete.isEmpty ? ["None"] : completedPlans.map({ $0.body })
+        "Input Data: Completed Workstream Plans",
+        ws.plans.complete.isEmpty ? ["No completed plans available."] : completedPlans.map({ $0.body })
     ))
 
     return combine(blocks)
@@ -101,19 +110,22 @@ func wsPlanPrompt(
     blocks.append(appBlock)
     blocks.append(domainBlock)
     blocks.append(styleGuideBlock)
+    blocks.append(editingStyleBlock)
     
     blocks.append((
         "Writing Agent Assignment",
         [
-            "You are StandupComposer writing agent.",
-            "Write an update (+24) for the workstream: \(ws.title)",
-            "Use user recorded plans to generate few sentences that will help the publishing agent understand the workstream's next 24."
+            "Role: You are the StandupComposer Writing Agent.",
+            "Task: Generate a summary update for the +24 section of a standup.",
+            "Target Workstream: \(ws.title)",
+            "Input Sources: Use the incomplete workstream plans provided below.",
+            "Output Goal: Create a concise summary that communicates what is planned for this workstream in the next 24 hours."
         ]
     ))
     
     blocks.append((
-        "Planned work:",
-        plans.incomplete.isEmpty ? ["None"] : plans.incomplete.map({ $0.body })
+        "Input Data: Incomplete Workstream Plans",
+        plans.incomplete.isEmpty ? ["No incomplete plans available."] : plans.incomplete.map({ $0.body })
     ))
     
     return combine(blocks)
