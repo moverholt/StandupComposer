@@ -8,9 +8,17 @@
 import SwiftUI
 
 struct WorkspaceWorkstreamDetailView: View {
+    @Environment(UserSettings.self) var settings
     let space: Workspace
     @Binding var stream: Workstream
-    
+
+    private func jiraBrowseURL(issueKey: String) -> URL? {
+        let base = settings.jiraUrl.trimmingCharacters(in: .whitespaces)
+        guard !base.isEmpty else { return nil }
+        let path = base.hasSuffix("/") ? String(base.dropLast()) : base
+        return URL(string: "\(path)/browse/\(issueKey)")
+    }
+
     var body: some View {
         VStack {
             HStack {
@@ -42,16 +50,14 @@ struct WorkspaceWorkstreamDetailView: View {
                                 .font(.title3)
                                 .foregroundStyle(.secondary)
                                 .textSelection(.enabled)
-                            if let url = URL(
-                                string: "https://myjira-temp.com/\(issue)"
-                            ) {
+                            if let url = jiraBrowseURL(issueKey: issue) {
                                 Link(destination: url) {
                                     Image(systemName: "safari")
                                         .imageScale(.medium)
                                         .padding(6)
                                         .contentShape(Rectangle())
                                 }
-                                .help("Open in browser")
+                                .help("Open in Jira")
                             }
                         }
                     }
@@ -90,6 +96,7 @@ struct WorkspaceWorkstreamDetailView: View {
         space: Workspace(),
         stream: $s1
     )
+    .environment(UserSettings.shared)
     .onAppear {
         s1.issueKey = "TEST-123"
         s1.appendUpdate(.today, body: "This is an update")

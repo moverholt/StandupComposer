@@ -13,6 +13,21 @@ enum WorkspaceSelected: Codable, Hashable {
     case newStandup
     case standup(Standup.ID)
     case none
+    
+    var hasInspector: Bool {
+        switch self {
+        case .newWorkstream:
+            false
+        case .workstream(_):
+            true
+        case .newStandup:
+            false
+        case .standup(_):
+            true
+        case .none:
+            false
+        }
+    }
 }
 
 struct WorkspaceContentView: View {
@@ -20,7 +35,6 @@ struct WorkspaceContentView: View {
     @Environment(UserSettings.self) var settings
 
     @State private var ovm = WorkspaceOverlayViewModel()
-    @State private var showInspector = false
     
     private var selected: WorkspaceSelected {
         settings.workspaceSelected
@@ -113,7 +127,7 @@ struct WorkspaceContentView: View {
             }
         }
         .inspector(
-            isPresented: $showInspector,
+            isPresented: $settings.workspaceShowInspector,
             content: {
                 if let index = selectedWorkstreamIndex {
                     WorkspaceWorkstreamInspectorView(
@@ -135,7 +149,7 @@ struct WorkspaceContentView: View {
             if hasInspectorDetail {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        showInspector.toggle()
+                        settings.workspaceShowInspector.toggle()
                     } label: {
                         Image(systemName: "slider.horizontal.3")
                     }

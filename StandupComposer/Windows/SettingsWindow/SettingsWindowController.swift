@@ -19,7 +19,5 @@ class SettingsWindowController: NSWindowController {
                 .environment(UserSettings.shared)
         )
         self.contentViewController = hostingController
-        // self.window?.center()
-        // window?.setFrameAutosaveName("workstream-nav-window")
     }
 }

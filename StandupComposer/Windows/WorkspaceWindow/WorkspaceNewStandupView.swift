@@ -24,55 +24,62 @@ struct WorkspaceNewStandupView: View {
     }
     
     var body: some View {
-        Form {
-            Section(
-                header: Text("New Standup")
-            ) {
-                TextField("Title", text: $title)
+        VStack(spacing: 0) {
+            HStack {
+                Text("New Standup")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button("Create Standup") {
+                    handleSubmit()
+                }
+                .buttonStyle(.borderedProminent)
             }
-            if workspace.streams.isEmpty {
-                Text("No Active Workstreams")
-                    .foregroundStyle(.primary)
-                    .italic()
-            } else {
-                Section {
-                    Text("-24")
-                        .font(.largeTitle)
-                    ForEach(workspace.streams.active) { stream in
-                        StreamHeaderView(stream: stream)
-                        if let i = workspace.streams.findIndex(id: stream.id) {
-                            Prev24StreamView(stream: $workspace.streams[i])
-                                .padding(.bottom)
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+            Divider()
+            Form {
+                Section(
+                    header: Text("New Standup")
+                ) {
+                    TextField("Title", text: $title)
+                }
+                if workspace.streams.isEmpty {
+                    Text("No Active Workstreams")
+                        .foregroundStyle(.primary)
+                        .italic()
+                } else {
+                    Section {
+                        Text("-24")
+                            .font(.largeTitle)
+                        ForEach(workspace.streams.active) { stream in
+                            StreamHeaderView(stream: stream)
+                            if let i = workspace.streams.findIndex(id: stream.id) {
+                                Prev24StreamView(stream: $workspace.streams[i])
+                                    .padding(.bottom)
+                            }
                         }
                     }
-                }
-                Section {
-                    Text("+24")
-                        .font(.largeTitle)
-                    ForEach(workspace.streams.active) { stream in
-                        StreamHeaderView(stream: stream)
-                        if let i = workspace.streams.findIndex(id: stream.id) {
-                            Next24StreamView(stream: $workspace.streams[i])
-                                .padding(.bottom)
+                    Section {
+                        Text("+24")
+                            .font(.largeTitle)
+                        ForEach(workspace.streams.active) { stream in
+                            StreamHeaderView(stream: stream)
+                            if let i = workspace.streams.findIndex(id: stream.id) {
+                                Next24StreamView(stream: $workspace.streams[i])
+                                    .padding(.bottom)
+                            }
                         }
                     }
                 }
             }
         }
         .formStyle(.grouped)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: handleSubmit) {
-                    Image(systemName: "square.and.pencil")
-                }
-                .disabled(createDisabled)
-            }
-        }
         .onSubmit {
             handleSubmit()
         }
         .onAppear {
-            title = "\(IsoDay.today.formatted(style: .complete)) - Standup"
+            title = "\(IsoDay.today.formatted(style: .complete))"
         }
     }
 }

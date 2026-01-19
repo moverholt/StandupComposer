@@ -8,52 +8,55 @@
 import SwiftUI
 
 struct StandFormattedView: View {
-    let stand: Standup
+    @Environment(UserSettings.self) var settings
+    @Binding var stand: Standup
+    
+    @State private var partial: String?
+    @State private var loading = false
+    @State private var error: String?
+    
+    @MainActor
+    private func run() async {
+        loading = true
+        error = nil
+        partial = ""
+        let prompt = slackFormatterPrompt(stand)
+        let stream = streamOpenAIChat(
+            prompt: prompt,
+            config: OpenAIConfig(settings)
+        )
+        do {
+            for try await partial in stream {
+                self.partial = partial
+            }
+            stand.formattedSlack = self.partial
+        } catch {
+            self.error = error.localizedDescription
+        }
+        partial = nil
+        loading = false
+    }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("-24")
-                        .font(.largeTitle.weight(.semibold))
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(stand.prevDay) { upd in
-                            VStack (alignment: .leading, spacing: 0) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    if let ik = upd.ws.issueKey {
-                                        Text("[\(ik)]")
-                                            .foregroundStyle(.secondary)
-                                            .fontDesign(.monospaced)
-                                            .font(.body.weight(.light))
-                                    }
-                                    Text(upd.ws.title)
-                                        .font(.title.weight(.semibold))
-                                }
-                                Text(upd.body ?? "No update")
-                            }
-                        }
-                    }
+            VStack {
+                if let body = partial ?? stand.formattedSlack {
+                    Text(body)
                 }
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("+24")
-                        .font(.largeTitle.weight(.semibold))
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(stand.today) { pln in
-                            VStack (alignment: .leading, spacing: 0) {
-                                HStack(alignment: .center, spacing: 6) {
-                                    if let ik = pln.ws.issueKey {
-                                        Text("[\(ik)]")
-                                            .foregroundStyle(.secondary)
-                                            .fontDesign(.monospaced)
-                                            .font(.body.weight(.light))
-                                    }
-                                    Text(pln.ws.title)
-                                        .font(.title.weight(.semibold))
-                                }
-                                Text(pln.body ?? "No update")
-                            }
+                Button(
+                    action: {
+                        Task {
+                            await run()
                         }
                     }
+                ) {
+                    Label("Format", systemImage: "wand.and.stars")
+                }
+                .disabled(loading)
+                if loading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .padding(.top, 4)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -65,8 +68,9 @@ struct StandFormattedView: View {
 
 #Preview {
     @Previewable @State var stand = Standup(.today)
-    StandFormattedView(stand: stand)
+    StandFormattedView(stand: $stand)
         .frame(width: 600, height: 400)
+        .environment(UserSettings())
         .onAppear {
             var ws1 = Workstream()
             ws1.issueKey = "ZZZZ-9998"

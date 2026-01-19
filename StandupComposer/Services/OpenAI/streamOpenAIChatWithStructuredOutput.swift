@@ -35,13 +35,10 @@ private struct StructuredOutputRequestBody: Encodable {
 
 func streamOpenAIChatWithStructuredOutput<T: Decodable>(
     prompt: String,
+    config: OpenAIConfig,
     responseType: T.Type
 ) -> AsyncThrowingStream<T, Error> {
-    let key = UserSettings.shared.openAIApiKey ?? "no-key"
-    let host = UserSettings.shared.openAIApiUrl
-    let config = OpenAIConfig(apiKey: key)
-    
-    let url = URL(string: "\(host)/v1/responses")!
+    let url = URL(string: "\(config.host)/v1/responses")!
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -144,6 +141,7 @@ func streamOpenAIChatWithStructuredOutput<T: Decodable>(
     let prompt = "Return a JSON object with summary and status fields"
     let stream = streamOpenAIChatWithStructuredOutput(
         prompt: prompt,
+        config: OpenAIConfig(UserSettings.shared),
         responseType: TestResponse.self
     )
     

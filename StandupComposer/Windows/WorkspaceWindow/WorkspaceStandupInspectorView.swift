@@ -4,47 +4,46 @@ struct WorkspaceStandupInspectorView: View {
     @Environment(UserSettings.self) var settings
     @Binding var stand: Standup
     @Binding var space: Workspace
-    
+
     @State private var showConfirm = false
 
     var body: some View {
         Form {
-            Section("Details") {
+            Section("General") {
                 TextField("Title", text: $stand.title)
                 LabeledContent("Day", value: stand.day.formatted(style: .complete))
             }
-            Section(
-                header: Text("")
-            ) {
-                HStack {
-                    Text("Created")
-                    Spacer()
-                    Text(stand.created.formatted())
+            Section("About") {
+                LabeledContent("ID") {
+                    Text(stand.id.uuidString)
+                        .font(.system(.body, design: .monospaced))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .textSelection(.enabled)
                 }
-                HStack {
-                    Text("Updated")
-                    Spacer()
-                    Text(stand.updated.formatted())
+                .help(stand.id.uuidString)
+                LabeledContent("Created", value: stand.created.formatted())
+                LabeledContent("Updated", value: stand.updated.formatted())
+            }
+            Section {
+                Button(role: .destructive) {
+                    showConfirm = true
+                } label: {
+                    Label("Delete Standup", systemImage: "trash")
                 }
+                .buttonStyle(.borderless)
             }
-            Button(role: .destructive) {
-                showConfirm = true
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            .confirmationDialog(
-                "Are you sure you want to delete this?",
-                isPresented: $showConfirm,
-                titleVisibility: .visible
-            ) {
+            .confirmationDialog("Delete Standup?", isPresented: $showConfirm, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
                     space.deleteStand(stand.id)
                     settings.workspaceSelected = .none
                 }
-                Button("Cancel", role: .cancel) {
-                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This cannot be undone.")
             }
         }
+        .formStyle(.grouped)
     }
 }
 
@@ -52,5 +51,7 @@ struct WorkspaceStandupInspectorView: View {
     @Previewable @State var stand = Standup(.today)
     @Previewable @State var space = Workspace()
     WorkspaceStandupInspectorView(stand: $stand, space: $space)
-        .frame(width: 200)
+        .environment(UserSettings())
+        .padding()
+        .frame(width: 300)
 }

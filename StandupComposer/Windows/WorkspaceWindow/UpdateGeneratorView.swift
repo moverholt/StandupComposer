@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct UpdateGeneratorView: View {
+    @Environment(UserSettings.self) var settings
     @Binding var update: Standup.WorkstreamGenUpdate
     
     let prompt: String
@@ -17,7 +18,10 @@ struct UpdateGeneratorView: View {
         update.ai.partial = nil
         update.ai.error = nil
         update.ai.active = true
-        let stream = streamOpenAIChat(prompt: prompt)
+        let stream = streamOpenAIChat(
+            prompt: prompt,
+            config: OpenAIConfig(settings)
+        )
         do {
             for try await partial in stream {
                 update.ai.partial = partial
@@ -99,6 +103,7 @@ struct UpdateGeneratorView: View {
         prompt: wsUpdatePrompt(ws, [], ws.updates)
     )
     .padding()
+    .environment(UserSettings())
     .background(
         .thinMaterial,
         in: RoundedRectangle(cornerRadius: 12)

@@ -20,9 +20,8 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
 
     init() {
         meta = Meta(id: UUID(), title: "New Workspace")
-        meta.title = "New Workspace"
-        self.streams = []
-        self.stands = []
+        streams = []
+        stands = []
     }
 
     init(meta: Meta, streams: [Workstream], stands: [Standup]) {
@@ -44,10 +43,7 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
     }
     
     mutating func publish(standId id: Standup.ID) {
-        print("Publish called with id: \(id)")
-        guard let index = stands.findIndex(id: id) else {
-            return
-        }
+        guard let index = stands.findIndex(id: id) else { return }
         stands[index].publish()
     }
     

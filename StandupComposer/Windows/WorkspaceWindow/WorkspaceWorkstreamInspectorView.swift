@@ -14,71 +14,56 @@ struct WorkspaceWorkstreamInspectorView: View {
     
     @State private var showConfirm = false
     
+    private var issueKeyBinding: Binding<String> {
+        Binding(
+            get: { stream.issueKey ?? "" },
+            set: { stream.issueKey = $0.isEmpty ? nil : $0 }
+        )
+    }
+
     var body: some View {
         Form {
-            Section(
-                header: Text("Info")
-            ) {
+            Section("General") {
                 TextField("Title", text: $stream.title)
-                TextField(
-                    "Jira Issue Key",
-                    text: Binding(
-                        get: {
-                            stream.issueKey ?? ""
-                        },
-                        set: {
-                            if $0.isEmpty {
-                                stream.issueKey = nil
-                            } else {
-                                stream.issueKey = $0
-                            }
-                        }
-                    )
-                )
+                TextField("Jira Issue Key", text: issueKeyBinding, prompt: Text("e.g. PROJ-123"))
                 Picker("Status", selection: $stream.status) {
                     ForEach(Workstream.Status.allCases, id: \.self) { status in
-                        Text(status.description)
-                            .tag(status)
+                        Text(status.description.capitalized).tag(status)
                     }
                 }
+                .pickerStyle(.menu)
             }
-            Section(
-                header: Text("Meta")
-            ) {
-                HStack {
-                    Text("ID")
-                    Spacer()
+            Section("About") {
+                LabeledContent("ID") {
                     Text(stream.id.uuidString)
+                        .font(.system(.body, design: .monospaced))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .textSelection(.enabled)
                 }
-                HStack {
-                    Text("Created")
-                    Spacer()
-                    Text(stream.created.formatted())
-                }
-                HStack {
-                    Text("Updated")
-                    Spacer()
-                    Text(stream.updated.formatted())
-                }
+                .help(stream.id.uuidString)
+                LabeledContent("Created", value: stream.created.formatted())
+                LabeledContent("Updated", value: stream.updated.formatted())
             }
-            Button(role: .destructive) {
-                showConfirm = true
-            } label: {
-                Label("Delete", systemImage: "trash")
+            Section {
+                Button(role: .destructive) {
+                    showConfirm = true
+                } label: {
+                    Label("Delete Workstream", systemImage: "trash")
+                }
+                .buttonStyle(.borderless)
             }
-            .confirmationDialog(
-                "Are you sure you want to delete this?",
-                isPresented: $showConfirm,
-                titleVisibility: .visible
-            ) {
+            .confirmationDialog("Delete Workstream?", isPresented: $showConfirm, titleVisibility: .visible) {
                 Button("Delete", role: .destructive) {
                     space.deleteWorkstream(stream.id)
                     settings.workspaceSelected = .none
                 }
-                Button("Cancel", role: .cancel) {
-                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This cannot be undone.")
             }
         }
+        .formStyle(.grouped)
     }
 }
 
@@ -87,4 +72,6 @@ struct WorkspaceWorkstreamInspectorView: View {
     @Previewable @State var space = Workspace()
     WorkspaceWorkstreamInspectorView(stream: $stream, space: $space)
         .environment(UserSettings())
+        .padding()
+        .frame(width: 300)
 }

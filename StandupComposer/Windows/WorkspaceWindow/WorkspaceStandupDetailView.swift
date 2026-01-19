@@ -9,6 +9,8 @@ import SwiftUI
 
 
 struct WorkspaceStandupDetailView: View {
+    @Environment(UserSettings.self) var settings
+    
     @Binding var stand: Standup
     @Binding var workspace: Workspace
     
@@ -56,7 +58,10 @@ struct WorkspaceStandupDetailView: View {
         stand.prevDay[index].ai.partial = nil
         stand.prevDay[index].ai.error = nil
         stand.prevDay[index].ai.active = true
-        let stream = streamOpenAIChat(prompt: prompt)
+        let stream = streamOpenAIChat(
+            prompt: prompt,
+            config: OpenAIConfig(settings)
+        )
         do {
             for try await partial in stream {
                 stand.prevDay[index].ai.partial = partial
@@ -76,7 +81,10 @@ struct WorkspaceStandupDetailView: View {
         stand.today[index].ai.partial = nil
         stand.today[index].ai.error = nil
         stand.today[index].ai.active = true
-        let stream = streamOpenAIChat(prompt: prompt)
+        let stream = streamOpenAIChat(
+            prompt: prompt,
+            config: OpenAIConfig(settings)
+        )
         do {
             for try await partial in stream {
                 stand.today[index].ai.partial = partial
@@ -136,11 +144,11 @@ struct WorkspaceStandupDetailView: View {
                         )
                     }
                     Tab("Formatted", systemImage: "paragraphsign") {
-                        StandFormattedView(stand: stand)
+                        StandFormattedView(stand: $stand)
                     }
                 }
             } else {
-                StandFormattedView(stand: stand)
+                StandFormattedView(stand: $stand)
             }
         }
     }
@@ -159,6 +167,7 @@ struct WorkspaceStandupDetailView: View {
         }
     }
     .frame(width: 700, height: 400)
+    .environment(UserSettings())
     .onAppear {
         var ws1 = Workstream()
         ws1.title = "Add new pasta types to pasta menu"
@@ -176,8 +185,8 @@ struct WorkspaceStandupDetailView: View {
         workspace.streams.append(ws2)
         
         var s1 = Standup(.today)
-//        s1.addWorkstream(ws1)
-//        s1.addWorkstream(ws2)
+        s1.addWorkstream(ws1)
+        s1.addWorkstream(ws2)
         
         s1.publish()
         workspace.stands.append(s1)

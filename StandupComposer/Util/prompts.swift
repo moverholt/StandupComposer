@@ -135,3 +135,89 @@ func wsPlanPrompt(
     let ws = Workstream()
     let _ = wsPlanPrompt(ws, [])
 }
+
+
+func slackFormatterPrompt(_ stand: Standup) -> String {
+    var blocks: [Block] = []
+    blocks.append(appBlock)
+    blocks.append(domainBlock)
+    
+    blocks.append((
+        "Publishing Agent Assignment",
+        [
+            "Role: You are the StandupComposer Publishing Agent.",
+            "Task: Assemble the individual -24 updates and +24 plans below into a single, clean string ready to copy and paste into Slack.",
+            "Input: Two sections are provided. -24 contains workstream updates (what was done in the previous 24 hours). +24 contains workstream plans (what is planned for the next 24 hours). Each item includes workstream title, optional issue key, and an AI-generated summary.",
+            "Output: Produce one formatted string with exactly two sections. Output only the standup content.",
+            "Structure: Two sections with clear visual separation. -24 first, then +24. Each workstream: lead with the workstream (issue key + title), then the body. Omit [ISSUE-KEY] when none. Empty or \"None\" bodies: omit that workstream. Omit a section entirely if it has no valid items.",
+            "Formatting (all render in Slack):",
+            "  • Section headers: put each on its own line, e.g. *═══ -24 ═══* or *─── +24 ───* or *► -24* / *► +24*. Pick one style and use it for both.",
+            "  • Workstream lead: *bold* for the title. If there is an issue key use `KEY` (backticks) before the title, e.g. *`FOOD-10` Add new pasta types*. Otherwise *Workstream title* only.",
+            "  • Body: on the next line(s), indented with spaces or a prefix like ▸ │ ► ▪. You may use • for sub-bullets if the body has multiple points.",
+            "  • Dividers: between workstreams use a blank line, or a light rule like ─── or ···. Between -24 and +24 use a slightly stronger break (e.g. blank line + section header).",
+            "  • Emphasis: _italic_ for occasional emphasis in the body. `code` for IDs, names, or technical terms. *Bold* only for workstream titles and section headers.",
+            "  • Symbols: ► ▸ ▪ • │ ─ ═ · are fine. Use sparingly so it stays scannable.",
+            "Be creative: mix header rules (═══, ───), bullets (►, ▸, ▪), and spacing to make -24 and +24 distinct and easy to scan. Stay consistent within one standup.",
+            "Empty or missing content: If an update or plan is \"None\" or empty, omit that workstream. If an entire section has no valid items, omit that section header and its items.",
+            "Tone: Professional, concise, and scannable. Preserve the meaning of each summary; do not paraphrase or add information."
+        ]
+    ))
+    
+    blocks.append((
+        "-24",
+        stand.prevDay.flatMap({ upd in
+            var arr: [String] = [
+                "Workstream: \(upd.ws.title)"
+            ]
+            if let key = upd.ws.issueKey {
+                arr.append("Issue key: \(key)")
+            }
+            arr.append("Update: \(upd.ai.final ?? "None")")
+            arr.append("**** ****")
+            return arr
+        })
+    ))
+    
+    blocks.append((
+        "+24",
+        stand.today.flatMap({ pln in
+            var arr: [String] = [
+                "Workstream: \(pln.ws.title)"
+            ]
+            if let key = pln.ws.issueKey {
+                arr.append("Issue key: \(key)")
+            }
+            arr.append("Plan: \(pln.ai.final ?? "None")")
+            arr.append("**** ****")
+            return arr
+        })
+    ))
+    
+    return combine(blocks)
+}
+
+#Playground {
+    var s = Standup(.today, title: "Mon Jan 19")
+    
+    var ws1 = Workstream()
+    ws1.title = "Add new pasta types to the pasta view"
+    ws1.issueKey = "FOOD-10"
+    var up1 = Standup.WorkstreamGenUpdate(ws1)
+    up1.ai.final = "Met with product manager about new pasta types."
+    s.prevDay.append(up1)
+    var pl1 = Standup.WorkstreamGenUpdate(ws1)
+    pl1.ai.final = "Update API to support to pasta attributes."
+    s.today.append(pl1)
+    
+    var ws2 = Workstream()
+    ws2.title = "Import next month's menu into the application"
+    ws2.issueKey = "FOOD-20"
+    var up2 = Standup.WorkstreamGenUpdate(ws2)
+    up2.ai.final = "Tracked down API documents and started to build backend updates"
+    s.prevDay.append(up2)
+    var pl2 = Standup.WorkstreamGenUpdate(ws2)
+    pl2.ai.final = "Meet with chefs to gather menu items."
+    s.today.append(pl2)
+
+    let p = slackFormatterPrompt(s)
+}

@@ -35,6 +35,8 @@ struct Standup: Codable, Identifiable {
     var prevDay: [WorkstreamGenUpdate]
     var today: [WorkstreamGenUpdate]
     
+    var formattedSlack: String?
+    
     private(set) var status: Status = .edit
     
     init(_ day: IsoDay) {

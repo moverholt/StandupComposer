@@ -22,8 +22,12 @@ final class UserSettings {
     private enum Keys: String {
         case openAIApiKey = "Settings.openAIApiKey"
         case openAIApiUrl = "Settings.openAIApiUrl"
+        case openAISelectedModel = "Settings.openAISelectedModel"
+        case jiraAccessToken = "Settings.jiraAccessToken"
+        case jiraUrl = "Settings.jiraUrl"
         case workspaceSelected = "Settings.workspaceSelected"
         case workspaceColumnVisibility = "Settings.workspaceColumnVisibility"
+        case workspaceShowInspector = "Settings.workspaceShowInspector"
     }
 
     // MARK: - Stored Properties
@@ -35,13 +39,34 @@ final class UserSettings {
     var openAIApiUrl: String = defaultOpenAIHost {
         didSet { saveOpenAIApiUrl() }
     }
+
+    var openAISelectedModel: String = "gpt-4.1-nano" {
+        didSet { saveOpenAISelectedModel() }
+    }
+
+    var jiraAccessToken: String? = nil {
+        didSet { saveJiraAccessToken() }
+    }
+
+    var jiraUrl: String = "" {
+        didSet { saveJiraUrl() }
+    }
     
     var workspaceSelected: WorkspaceSelected = .none {
-        didSet { saveWorkspaceSelected() }
+        didSet {
+            saveWorkspaceSelected()
+            if workspaceShowInspector && !workspaceSelected.hasInspector {
+                workspaceShowInspector = false
+            }
+        }
     }
 
     var workspaceColumnVisibility: NavigationSplitViewVisibility = .all {
         didSet { saveWorkspaceColumnVisibility() }
+    }
+
+    var workspaceShowInspector: Bool = false {
+        didSet { saveWorkspaceShowInspector() }
     }
 
     // MARK: - Init
@@ -49,8 +74,12 @@ final class UserSettings {
     init() {
         loadOpenAIApiKey()
         loadOpenAIApiUrl()
+        loadOpenAISelectedModel()
+        loadJiraAccessToken()
+        loadJiraUrl()
         loadWorkspaceSelected()
         loadWorkspaceColumnVisibility()
+        loadWorkspaceShowInspector()
     }
 
     // MARK: - Persistence
@@ -62,6 +91,18 @@ final class UserSettings {
     private func saveOpenAIApiUrl() {
         saveKey(openAIApiUrl, for: .openAIApiUrl)
     }
+
+    private func saveOpenAISelectedModel() {
+        saveKey(openAISelectedModel, for: .openAISelectedModel)
+    }
+
+    private func saveJiraAccessToken() {
+        saveKey(jiraAccessToken, for: .jiraAccessToken)
+    }
+
+    private func saveJiraUrl() {
+        saveKey(jiraUrl, for: .jiraUrl)
+    }
     
     private func saveWorkspaceSelected() {
         saveKey(workspaceSelected, for: .workspaceSelected)
@@ -69,6 +110,10 @@ final class UserSettings {
     
     private func saveWorkspaceColumnVisibility() {
         saveKey(workspaceColumnVisibility, for: .workspaceColumnVisibility)
+    }
+
+    private func saveWorkspaceShowInspector() {
+        saveKey(workspaceShowInspector, for: .workspaceShowInspector)
     }
     
     private func saveKey<T: Codable>(_ value: T?, for key: Keys) {
@@ -90,6 +135,18 @@ final class UserSettings {
     private func loadOpenAIApiUrl() {
         self.openAIApiUrl = loadKey(.openAIApiUrl) ?? Self.defaultOpenAIHost
     }
+
+    private func loadOpenAISelectedModel() {
+        self.openAISelectedModel = loadKey(.openAISelectedModel) ?? "gpt-4.1-nano"
+    }
+
+    private func loadJiraAccessToken() {
+        self.jiraAccessToken = loadKey(.jiraAccessToken) ?? ""
+    }
+
+    private func loadJiraUrl() {
+        self.jiraUrl = loadKey(.jiraUrl) ?? ""
+    }
     
     private func loadWorkspaceSelected() {
         self.workspaceSelected = loadKey(.workspaceSelected) ?? .none
@@ -97,6 +154,10 @@ final class UserSettings {
     
     private func loadWorkspaceColumnVisibility() {
         self.workspaceColumnVisibility = loadKey(.workspaceColumnVisibility) ?? .all
+    }
+
+    private func loadWorkspaceShowInspector() {
+        self.workspaceShowInspector = loadKey(.workspaceShowInspector) ?? false
     }
     
     private func loadKey<T: Codable>(_ key: Keys) -> T? {
