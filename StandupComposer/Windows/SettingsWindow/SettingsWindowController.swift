@@ -12,7 +12,7 @@ class SettingsWindowController: NSWindowController {
 
     override func windowDidLoad() {
         super.windowDidLoad()
-        
+
         let hostingController = NSHostingController(
             rootView: SettingsWindowContentView()
                 .scenePadding()

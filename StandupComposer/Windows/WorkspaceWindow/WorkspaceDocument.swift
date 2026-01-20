@@ -11,7 +11,7 @@ import SwiftUI
 @Observable
 final class WorkspaceDocumentModel {
     var workspace: Workspace
-    
+
     init(workspace: Workspace) {
         self.workspace = workspace
     }
@@ -19,20 +19,22 @@ final class WorkspaceDocumentModel {
 
 class WorkspaceDocument: NSDocument {
     var model: WorkspaceDocumentModel!
-    
+    private var pendingAutosaveWorkItem: DispatchWorkItem?
+    private static let autosaveDebounceInterval: TimeInterval = 1.5
+
     override var windowNibName: String? {
         return "WorkspaceDocument"
     }
-    
+
     override nonisolated class var autosavesInPlace: Bool {
         return true
     }
-    
+
     override func showWindows() {
         super.showWindows()
         NSApp.appDelegate?.populateStatusMenu()
     }
-    
+
     override func makeWindowControllers() {
         if model == nil {
             model = WorkspaceDocumentModel(workspace: Workspace())
@@ -49,6 +51,15 @@ class WorkspaceDocument: NSDocument {
                     set: {
                         self.model.workspace = $0
                         self.updateChangeCount(.changeDone)
+                        self.pendingAutosaveWorkItem?.cancel()
+                        let work = DispatchWorkItem { [weak self] in
+                            self?.pendingAutosaveWorkItem = nil
+                            self?.autosave(withImplicitCancellability: true, completionHandler: { _ in })
+                        }
+                        self.pendingAutosaveWorkItem = work
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + WorkspaceDocument.autosaveDebounceInterval,
+                            execute: work)
                     }
                 )
             )
@@ -56,28 +67,28 @@ class WorkspaceDocument: NSDocument {
         )
 
         cont.contentViewController = hostingController
-        
+
         if let window = cont.window {
             window.setContentSize(NSSize(width: 1000, height: 620))
         }
     }
-    
+
     override func fileWrapper(ofType typeName: String) throws -> FileWrapper {
         var rootChildren: [String: FileWrapper] = [:]
-        
+
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        
+
         // ---- Workspace.json (metadata + possibly embedded workstreams) ----
         let workspaceData = try encoder.encode(model.workspace.meta)
         let workspaceWrapper = FileWrapper(regularFileWithContents: workspaceData)
         workspaceWrapper.preferredFilename = "Workspace.json"
         rootChildren["Workspace.json"] = workspaceWrapper
-        
+
         // ---- Workstreams/ directory ----
         var workstreamChildren: [String: FileWrapper] = [:]
-        
+
         for workstream in model.workspace.streams {
             let data = try encoder.encode(workstream)
             let filename = "\(workstream.id.uuidString).json"
@@ -85,16 +96,16 @@ class WorkspaceDocument: NSDocument {
             fileWrapper.preferredFilename = filename
             workstreamChildren[filename] = fileWrapper
         }
-        
+
         let workstreamsFolder = FileWrapper(
             directoryWithFileWrappers: workstreamChildren
         )
         workstreamsFolder.preferredFilename = "Workstreams"
         rootChildren["Workstreams"] = workstreamsFolder
-        
+
         // ---- Standups/ directory ----
         var standupChildren: [String: FileWrapper] = [:]
-        
+
         for standup in model.workspace.stands {
             let data = try encoder.encode(standup)
             let filename = "\(standup.id.uuidString).json"
@@ -102,56 +113,60 @@ class WorkspaceDocument: NSDocument {
             fileWrapper.preferredFilename = filename
             standupChildren[filename] = fileWrapper
         }
-        
+
         let standupsFolder = FileWrapper(
             directoryWithFileWrappers: standupChildren
         )
         standupsFolder.preferredFilename = "Standups"
         rootChildren["Standups"] = standupsFolder
-        
+
         // ---- Root workspace package ----
         let rootWrapper = FileWrapper(directoryWithFileWrappers: rootChildren)
         return rootWrapper
     }
-    
+
     override nonisolated func read(
         from fileWrapper: FileWrapper,
         ofType typeName: String
     ) throws {
         try MainActor.assumeIsolated {
             guard fileWrapper.isDirectory,
-                  let children = fileWrapper.fileWrappers else {
+                let children = fileWrapper.fileWrappers
+            else {
                 throw CocoaError(.fileReadCorruptFile)
             }
-            
+
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             var loadedWorkspaceMeta: Workspace.Meta? = nil
-            
-                // ---- Workspace.json (metadata: id, title, etc.) ----
+
+            // ---- Workspace.json (metadata: id, title, etc.) ----
             if let workspaceWrapper = children["Workspace.json"],
-               let data = workspaceWrapper.regularFileContents {
+                let data = workspaceWrapper.regularFileContents
+            {
                 do {
-                    loadedWorkspaceMeta = try decoder
+                    loadedWorkspaceMeta =
+                        try decoder
                         .decode(Workspace.Meta.self, from: data)
                 } catch {
                     NSLog("Failed to decode Workspace.json: \(error)")
-                        // fall back to default Workspace() if decode fails
+                    // fall back to default Workspace() if decode fails
                 }
             }
-            
+
             if loadedWorkspaceMeta == nil {
                 Swift.print("No loaded workspace meta file!")
                 fatalError()
             }
-            
+
             // ---- Workstreams/ folder ----
             var loadedWorkstreams: [Workstream] = []
-            
+
             if let workstreamsWrapper = children["Workstreams"],
-               workstreamsWrapper.isDirectory,
-               let workstreamFiles = workstreamsWrapper.fileWrappers {
-                
+                workstreamsWrapper.isDirectory,
+                let workstreamFiles = workstreamsWrapper.fileWrappers
+            {
+
                 for (_, wrapper) in workstreamFiles {
                     guard let data = wrapper.regularFileContents else { continue }
                     do {
@@ -162,14 +177,15 @@ class WorkspaceDocument: NSDocument {
                     }
                 }
             }
-            
+
             // ---- Standups/ folder ----
             var loadedStandups: [Standup] = []
-            
+
             if let standupsWrapper = children["Standups"],
-               standupsWrapper.isDirectory,
-               let standupFiles = standupsWrapper.fileWrappers {
-                
+                standupsWrapper.isDirectory,
+                let standupFiles = standupsWrapper.fileWrappers
+            {
+
                 for (_, wrapper) in standupFiles {
                     guard let data = wrapper.regularFileContents else { continue }
                     do {
@@ -180,16 +196,14 @@ class WorkspaceDocument: NSDocument {
                     }
                 }
             }
-            
+
             let workspace = Workspace(
                 meta: loadedWorkspaceMeta!,
                 streams: loadedWorkstreams,
                 stands: loadedStandups
             )
-            
-            
+
             model = WorkspaceDocumentModel(workspace: workspace)
         }
     }
 }
-
