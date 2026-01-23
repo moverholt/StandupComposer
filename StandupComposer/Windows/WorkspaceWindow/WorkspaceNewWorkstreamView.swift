@@ -49,9 +49,11 @@ struct WorkspaceNewWorkstreamView: View {
                     Text("New Workstream")
                         .font(.title2)
                         .fontWeight(.semibold)
-                    Text("Create a workstream to track plans and daily updates for a feature or project.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text(
+                        "Create a workstream to track plans and daily updates for a feature or project."
+                    )
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button("Create Workstream") {
@@ -74,16 +76,21 @@ struct WorkspaceNewWorkstreamView: View {
                 } header: {
                     Text("Details")
                 } footer: {
-                    Text("Give the workstream a name. Optionally add a Jira issue key to link it to a ticket; you can also pick one from your assigned stories below.")
+                    Text(
+                        "Give the workstream a name. Optionally add a Jira issue key to link it to a ticket; you can also pick one from your assigned stories below."
+                    )
                 }
 
                 Section {
                     if !jiraConfigured {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Jira is not configured. Set the Jira URL and Access Token in Settings to see stories assigned to you and prefill the form.")
-                                .foregroundStyle(.secondary)
+                            Text(
+                                "Jira is not configured. Set the Jira URL and Access Token in Settings to see stories assigned to you and prefill the form."
+                            )
+                            .foregroundStyle(.secondary)
                             Button("Open Settings…") {
-                                NSApp.sendAction(Selector(("showSettings:")), to: NSApp.delegate, from: nil)
+                                NSApp.sendAction(
+                                    Selector(("showSettings:")), to: NSApp.delegate, from: nil)
                             }
                             .buttonStyle(.borderless)
                         }
@@ -114,8 +121,11 @@ struct WorkspaceNewWorkstreamView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 4)
                     } else {
-                        JiraStoryPickerList(stories: jiraStories, onSelect: fillFromJiraStory)
-                            .frame(minHeight: 100, maxHeight: 240)
+                        JiraStoryPickerList(
+                            stories: jiraStories,
+                            onSelect: fillFromJiraStory
+                        )
+                        .frame(minHeight: 240)
                     }
                 } header: {
                     HStack {
@@ -136,9 +146,13 @@ struct WorkspaceNewWorkstreamView: View {
                     if jiraConfigured && !jiraStories.isEmpty {
                         Text("Select a story to fill in the title and issue key above.")
                     } else if jiraConfigured {
-                        Text("Stories from your Jira instance. Tapping one copies its title and key into the form.")
+                        Text(
+                            "Stories from your Jira instance. Tapping one copies its title and key into the form."
+                        )
                     } else {
-                        Text("Configure Jira in Settings to link workstreams to tickets and prefill from your assigned stories.")
+                        Text(
+                            "Configure Jira in Settings to link workstreams to tickets and prefill from your assigned stories."
+                        )
                     }
                 }
                 .task(id: jiraRetryId) {
@@ -168,7 +182,7 @@ private struct JiraStoryPickerList: View {
 
     var body: some View {
         List {
-            ForEach(stories, id: \.key) { (story: JiraStory) in
+            ForEach(stories) { story in
                 Button {
                     onSelect(story)
                 } label: {

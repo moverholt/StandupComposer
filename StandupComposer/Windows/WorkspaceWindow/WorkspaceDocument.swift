@@ -51,15 +51,6 @@ class WorkspaceDocument: NSDocument {
                     set: {
                         self.model.workspace = $0
                         self.updateChangeCount(.changeDone)
-                        self.pendingAutosaveWorkItem?.cancel()
-                        let work = DispatchWorkItem { [weak self] in
-                            self?.pendingAutosaveWorkItem = nil
-                            self?.autosave(withImplicitCancellability: true, completionHandler: { _ in })
-                        }
-                        self.pendingAutosaveWorkItem = work
-                        DispatchQueue.main.asyncAfter(
-                            deadline: .now() + WorkspaceDocument.autosaveDebounceInterval,
-                            execute: work)
                     }
                 )
             )

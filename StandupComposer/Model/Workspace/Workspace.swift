@@ -76,6 +76,9 @@ struct Workspace: Codable, CustomStringConvertible, Identifiable  {
         
         for i in 0..<streams.count {
             let stream = streams[i]
+            if !stream.active {
+                continue
+            }
             let upd = Standup.WorkstreamGenUpdate(stream)
             stand.prevDay.append(upd)
             let pln = Standup.WorkstreamGenUpdate(stream)

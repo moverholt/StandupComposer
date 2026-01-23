@@ -69,6 +69,16 @@ struct Workstream: Codable, CustomStringConvertible, Identifiable {
         plans = []
     }
     
+    var description: String {
+        "\(issueKey == nil ? "" : "[\(issueKey!)] ")\(title)"
+    }
+    
+    var updatesByDay: [IsoDay: [Update]] {
+        Dictionary(grouping: updates, by: \.day)
+    }
+    
+    var active: Bool { status == .active }
+    
     mutating func appendUpdate(_ day: IsoDay, body: String) {
         let upd = Update(day, body: body)
         updates.append(upd)
@@ -97,14 +107,6 @@ struct Workstream: Codable, CustomStringConvertible, Identifiable {
             plans[i].dayComplete = day
             plans[i].updated = Date()
         }
-    }
-    
-    var description: String {
-        "\(issueKey == nil ? "" : "[\(issueKey!)] ")\(title)"
-    }
-    
-    var updatesByDay: [IsoDay: [Update]] {
-        Dictionary(grouping: updates, by: \.day)
     }
 }
 

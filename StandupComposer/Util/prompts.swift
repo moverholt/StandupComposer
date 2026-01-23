@@ -225,7 +225,8 @@ func slackFormatterPrompt(_ stand: Standup, jiraBaseUrl: String? = nil) -> Strin
     var pubContent = [
         "Role: You are the StandupComposer Publishing Agent.",
         "Task: Assemble the -24 and +24 items below into one plain-text string. The output will be copied and pasted into Slack. Use only Slack mrkdwn (https://docs.slack.dev/messaging/formatting-message-text/): *bold*, _italic_, `code`, ~strike~; links as <url> or <url|link text>; newlines for line breaks. Do not use Unicode symbols or decorative rules.",
-        "Output: Exactly 2 sections: *-24* (past 24 hours) then *+24* (next 24 hours). Each workstream has 1 row in -24 and 1 row in +24. Every row must: (1) identify the workstream—bold the workstream title (e.g. *Workstream Name*; use full title or clear abbreviated title); (2) state the update (in -24) or the plan (in +24). Omit a workstream row if its update or plan body is empty or \"None\". Omit a section entirely if it has no rows.",
+        "Output: Exactly 2 sections: *-24* (past 24 hours) then *+24* (next 24 hours). Each workstream has 1 row in -24 and 1 row in +24. Every row must: (1) identify the workstream—bold the workstream title using *Workstream Name* format (e.g. *Add new pasta types to the pasta view* or *Import next month's menu*; use full title or clear abbreviated title); (2) state the update (in -24) or the plan (in +24). Omit a workstream row if its update or plan body is empty or \"None\". Omit a section entirely if it has no rows.",
+        "Style: Bold the workstream title in each row using *Workstream Title* format, followed by the update or plan content.",
     ]
     if !jiraBrowse.isEmpty {
         pubContent.append(

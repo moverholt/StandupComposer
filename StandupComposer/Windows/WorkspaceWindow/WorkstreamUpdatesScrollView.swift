@@ -11,16 +11,20 @@ public struct WorkstreamUpdatesScrollView: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading) {
-                ForEach(last60Days) { day in
-                    if let updates = stream.updatesByDay[day] {
-                        Text(day.formatted(style: .abbreviated))
-                            .foregroundStyle(.secondary)
-                            .font(.title3)
-                        WorkstreamUpdatesDay(
-                            updates: updates,
-                            space: space,
-                            stream: $stream
-                        )
+                if stream.updatesByDay.count == 0 {
+                    Text("None")
+                } else {
+                    ForEach(last60Days) { day in
+                        if let updates = stream.updatesByDay[day] {
+                            Text(day.formatted(style: .abbreviated))
+                                .foregroundStyle(.secondary)
+                                .font(.title3)
+                            WorkstreamUpdatesDay(
+                                updates: updates,
+                                space: space,
+                                stream: $stream
+                            )
+                        }
                     }
                 }
             }

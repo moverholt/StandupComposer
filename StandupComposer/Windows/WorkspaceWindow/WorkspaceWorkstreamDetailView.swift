@@ -70,10 +70,7 @@ struct WorkspaceWorkstreamDetailView: View {
                             .font(.title2)
                         Spacer()
                     }
-                    WorkstreamUpdatesScrollView(
-                        space: space,
-                        stream: $stream
-                    )
+                    WorkstreamUpdatesScrollView(space: space, stream: $stream)
                     WorkstreamAddUpdateInput(stream: $stream)
                 }
                 VStack(alignment: .leading) {
