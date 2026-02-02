@@ -28,13 +28,16 @@ struct WorkspaceNavList: View {
             }
             .listSectionSeparator(.visible)
             Section("Standups") {
+//                Button("Temp show doc") {
+//                    NSApp.appDelegate?.showTempStandDocWindow()
+//                }
                 if !workspace.isEditingStandup {
                     Label("New Standup", systemImage: "square.and.pencil")
                         .tag(WorkspaceSelected.newStandup)
                         .disabled(true)
                 }
                 ForEach(
-                    workspace.stands.sorted { $0.updated > $1.updated }
+                    workspace.stands.reversed()
                 ) { st in
                     Label(
                         st.title,
@@ -66,22 +69,22 @@ struct WorkspaceNavList: View {
         .listStyle(.sidebar)
         .environment(UserSettings())
         .onAppear {
-            var ws1 = Workstream()
-            ws1.title = "Some work to be done"
-            ws1.issueKey = "FOOD-1234"
-            workspace.streams.append(ws1)
-            var ws2 = Workstream()
-            ws2.title = "Some work to be done"
-            ws2.issueKey = "PASTA-1234"
-            workspace.streams.append(ws2)
-            
-            var s1 = Standup(.yesterday)
-            s1.title = "1/1/2026 Standup"
-            s1.publish()
-            workspace.stands.append(s1)
-            
-            var s2 = Standup(.today)
-            s2.title = "1/2/2026 Standup"
-            workspace.stands.append(s2)
+            var ws1 = Workstream(UUID())
+//            ws1.title = "Some work to be done"
+//            ws1.issueKey = "FOOD-1234"
+//            workspace.streams.append(ws1)
+//            var ws2 = Workstream(UUID())
+//            ws2.title = "Some work to be done"
+//            ws2.issueKey = "PASTA-1234"
+//            workspace.streams.append(ws2)
+//            
+//            var s1 = Standup(workspace.id)
+//            s1.title = "1/1/2026 Standup"
+//            s1.publish()
+//            workspace.stands.append(s1)
+//            
+//            var s2 = Standup(workspace.id)
+//            s2.title = "1/2/2026 Standup"
+//            workspace.stands.append(s2)
         }
 }

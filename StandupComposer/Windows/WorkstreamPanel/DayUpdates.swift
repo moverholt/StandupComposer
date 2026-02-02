@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DayUpdates: View {
-    let updates: [Workstream.Update]
+    let updates: [Workstream.Entry]
 
     var body: some View {
         GroupBox(

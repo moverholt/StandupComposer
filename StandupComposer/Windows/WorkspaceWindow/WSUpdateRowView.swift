@@ -14,16 +14,18 @@ struct WSUpdateRowView: View {
     @Binding var stand: Standup
 
     private var streamUpdateIndex: Int? {
-        stand.prevDay.findIndex(wsid: stream.id)
+//        stand.prevDay.findIndex(wsid: stream.id)
+        nil
     }
     
-    private var updates: [Workstream.Update] {
-        stream.updates.forStand(stand.id)
+    private var updates: [Workstream.Entry] {
+//        stream.updates.forStand(stand.id)
+        []
     }
     
-    private var completedPlans: [Workstream.Plan] {
-        stream.plans.completedForStand(stand.id)
-    }
+//    private var completedPlans: [Workstream.Plan] {
+//        stream.plans.completedForStand(stand.id)
+//    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -49,22 +51,22 @@ struct WSUpdateRowView: View {
                             systemImage: "checkmark.circle"
                         )
                     ) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            if completedPlans.isEmpty {
-                                Text("None")
-                            } else {
-                                ForEach(completedPlans) { u in
-                                    HStack {
-                                        Image(systemName: "checkmark")
-                                            .font(.footnote)
-                                        Text(u.body)
-                                            .font(.title3)
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
+//                        VStack(alignment: .leading, spacing: 6) {
+//                            if completedPlans.isEmpty {
+//                                Text("None")
+//                            } else {
+//                                ForEach(completedPlans) { u in
+//                                    HStack {
+//                                        Image(systemName: "checkmark")
+//                                            .font(.footnote)
+//                                        Text(u.body)
+//                                            .font(.title3)
+//                                    }
+//                                }
+//                            }
+//                        }
+//                        .padding()
+//                        .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
                     GroupBox(
                         label: Label(
@@ -91,8 +93,7 @@ struct WSUpdateRowView: View {
                         HStack {
                             Button(action: {
                                 ovm.showWorkstreamAddUpdate(
-                                    stream.id,
-                                    standId: stand.id
+                                    stream.id
                                 )
                             }) {
                                 Label("Add update", systemImage: "plus.circle")
@@ -103,24 +104,24 @@ struct WSUpdateRowView: View {
                         }
                     }
                 }
-                if let i = streamUpdateIndex {
-                    GroupBox(
-                        label: Label(
-                            "AI Summary",
-                            systemImage: "sparkles.rectangle.stack"
-                        )
-                    ) {
-                        UpdateGeneratorView(
-                            update: $stand.prevDay[i],
-                            prompt: wsUpdatePrompt(
-                                stream,
-                                completedPlans,
-                                updates,
-                            )
-                        )
-                        .frame(maxWidth: .infinity, alignment: .topLeading)
-                    }
-                }
+//                if let i = streamUpdateIndex {
+//                    GroupBox(
+//                        label: Label(
+//                            "AI Summary",
+//                            systemImage: "sparkles.rectangle.stack"
+//                        )
+//                    ) {
+//                        UpdateGeneratorView(
+//                            update: $stand.prevDay[i],
+//                            prompt: wsUpdatePrompt(
+//                                stream,
+//                                completedPlans,
+//                                updates,
+//                            )
+//                        )
+//                        .frame(maxWidth: .infinity, alignment: .topLeading)
+//                    }
+//                }
             }
         }
     }
@@ -128,14 +129,14 @@ struct WSUpdateRowView: View {
 
 #Preview {
     @Previewable @State var space = Workspace()
-    @Previewable @State var stream = Workstream()
-    @Previewable @State var stand = Standup(.today)
+    @Previewable @State var stream = Workstream(UUID())
+    @Previewable @State var stand = Standup(UUID())
     WSUpdateRowView(stream: stream, stand: $stand)
         .padding()
         .frame(width: 600, height: 300)
         .environment(WorkspaceOverlayViewModel())
         .onAppear {
             stream.issueKey = "FOOD-1234"
-            stream.appendUpdate(.today, body: "Added new pasta types")
+//            stream.appendUpdate(.today, body: "Added new pasta types")
         }
 }

@@ -28,13 +28,14 @@ struct InlineAddWorkstreamPlan: View {
     private func addDraft() {
         let text = trimmed
         guard !text.isEmpty else { return }
-        stream.plans.append(.today, text)
+//        stream.plans.append(.today, text)
+//        stream.appendPlan(text)
         draft = ""
     }
 }
 
 #Preview {
-    @Previewable @State var ws = Workstream()
+    @Previewable @State var ws = Workstream(UUID())
     InlineAddWorkstreamPlan(stream: $ws)
         .padding()
 }

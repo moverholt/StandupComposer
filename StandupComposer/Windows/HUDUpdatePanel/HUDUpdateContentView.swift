@@ -10,14 +10,10 @@ import SwiftUI
 struct HUDUpdateContentView: View {
     @Environment(\.dismiss) private var dismiss
 
-    @Binding var models: [Workstream]
-    @State var selectedId: Workstream.ID!
+    @Binding var space: Workspace
+    @State var selectedId: Workstream.ID?
     @State var text = ""
     
-    var selectedIndex: Int? {
-        models.findIndex(id: selectedId)
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
@@ -26,11 +22,8 @@ struct HUDUpdateContentView: View {
                     placeholder: "Type your update here",
                 ) {
                     print("Submit")
-                    if let index = selectedIndex {
-                        models[index].appendUpdate(
-                            .today,
-                            body: text
-                        )
+                    if let id = selectedId {
+                        space.addWorkstreamEntry(id, text)
                         text = ""
                         dismiss()
                     }
@@ -42,26 +35,26 @@ struct HUDUpdateContentView: View {
             }
             HStack(spacing: 6) {
                 Picker("", selection: $selectedId) {
-                    ForEach(models.active, id: \.id) { model in
-                        Text(model.description)
-                            .tag(model.id)
+                    ForEach(space.streams, id: \.id) { stream in
+                        Text(stream.description)
+                            .tag(stream.id)
                     }
                 }
                 .controlSize(.small)
                 .pickerStyle(.menu)
-                Button {
-//                    NSApp.appDelegate?.showWorkstreamNavWindow(selectID: selectedId)
-                } label: {
-                    Image(
-                        systemName: "macwindow.on.rectangle"
-                    )
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
+//                Button {
+////                    NSApp.appDelegate?.showWorkstreamNavWindow(selectID: selectedId)
+//                } label: {
+//                    Image(
+//                        systemName: "macwindow.on.rectangle"
+//                    )
+//                }
+//                .buttonStyle(.borderless)
+//                .controlSize(.small)
                 Spacer()
                 Button("Update") {
-                    if let index = selectedIndex {
-                        models[index].appendUpdate(.today, body: text)
+                    if let id = selectedId {
+                        space.addWorkstreamEntry(id, text)
                         text = ""
                         dismiss()
                     }
@@ -73,7 +66,7 @@ struct HUDUpdateContentView: View {
         }
         .onAppear {
             if selectedId == nil {
-                selectedId = models.active.first?.id
+                selectedId = space.streams.active.first?.id
             }
         }
         .background(.ultraThinMaterial.opacity(0.6))
@@ -93,12 +86,6 @@ struct HUDUpdateContentView: View {
 }
 
 #Preview {
-    HUDUpdateContentView(
-        models: .constant(
-            [
-                Workstream(),
-                Workstream()
-            ]
-        )
-    )
+    @Previewable @State var space = Workspace()
+    HUDUpdateContentView(space: $space)
 }

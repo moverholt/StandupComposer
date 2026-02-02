@@ -9,7 +9,8 @@ import Cocoa
 import SwiftUI
 
 class WorkstreamPanelController: NSWindowController {
-    var stream: Binding<Workstream>!
+    var space: Binding<Workspace>!
+    var stream: Workstream!
 
     var panel: WorkstreamPanel! { self.window as? WorkstreamPanel }
 
@@ -20,7 +21,7 @@ class WorkstreamPanelController: NSWindowController {
         panel.backgroundColor = .clear
         
         let hostingController = NSHostingController(
-            rootView: WorkstreamPanelContentView(stream: stream)
+            rootView: WorkstreamPanelContentView(space: space, stream: stream)
         )
         self.contentViewController = hostingController
     }

@@ -46,7 +46,7 @@ class WorkspaceDocument: NSDocument {
         super.windowControllerDidLoadNib(cont)
         let hostingController = NSHostingController(
             rootView: WorkspaceContentView(
-                workspace: Binding(
+                space: Binding(
                     get: { self.model.workspace },
                     set: {
                         self.model.workspace = $0
@@ -186,6 +186,7 @@ class WorkspaceDocument: NSDocument {
                         NSLog("Failed to decode standup: \(error)")
                     }
                 }
+                loadedStandups.sort(by: { $0.created < $1.created })
             }
 
             let workspace = Workspace(

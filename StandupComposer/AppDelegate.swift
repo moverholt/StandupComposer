@@ -29,6 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         windowNibName: "SettingsWindowController"
     )
     private var wsPanelControllers: [Workstream.ID: WorkstreamPanelController] = [:]
+    private var tempStandDocController: StandDocWindowController?
     
     func applicationDidFinishLaunching(
         _ aNotification: Notification
@@ -121,16 +122,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         _ id: Workstream.ID
     ) -> WorkstreamPanelController? {
         print("Make controller for ID: \(id.uuidString)")
-        guard let index = currWSDoc?.model.workspace.streams.findIndex(id: id) else {
-            return nil
-        }
         let cont = WorkstreamPanelController(
             windowNibName: "WorkstreamPanelController"
         )
-        cont.stream = Binding(
-            get: { self.currWSDoc!.model.workspace.streams[index] },
-            set: { self.currWSDoc!.model.workspace.streams[index] = $0 }
+        cont.space = Binding(
+            get: { self.currWSDoc!.model.workspace },
+            set: { self.currWSDoc!.model.workspace = $0 }
         )
+        cont.stream = self.currWSDoc!.model.workspace.streams.find(id: id)
         wsPanelControllers[id] = cont
         return cont
     }
@@ -285,18 +284,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func getHUDUpdateController() -> HUDUpdatePanelController? {
         guard let doc = currWSDoc else { return nil }
-        let wspId = doc.model.workspace.id
-        if hudUpdateController?.wspId == wspId {
+        if hudUpdateController?.space.id == doc.model.workspace.id {
             return hudUpdateController
         }
         let cont = HUDUpdatePanelController(
             windowNibName: "HUDUpdatePanelController"
         )
-        cont.wspId = wspId
-        cont.streams = Binding(
-            get: { doc.model.workspace.streams },
+        cont.space = Binding(
+            get: { doc.model.workspace },
             set: {
-                doc.model.workspace.streams = $0
+                doc.model.workspace = $0
                 doc.save(nil)
             }
         )
@@ -337,6 +334,48 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
         return false
+    }
+    
+    func showTempStandDocWindow() {
+        if let cont = tempStandDocController {
+            cont.showWindow(self)
+            cont.window?.makeKeyAndOrderFront(self)
+            return
+        }
+        guard let doc = currWSDoc else {
+            print("showTempStandDocWindow: No current workspace document")
+            return
+        }
+        print("showTempStandDocWindow: Current doc: \(doc.displayName ?? "unnamed")")
+        
+        guard let stand = doc.model.workspace.editingStandup else {
+            print("showTempStandDocWindow: No editing standup found")
+            return
+        }
+        guard let index = doc.model.workspace.stands.findIndex(id: stand.id) else {
+            print("showTempStandDocWindow: Could not find standup index")
+            return
+        }
+        
+        print("showTempStandDocWindow: Creating window controller")
+        let cont = StandDocWindowController(
+            windowNibName: "StandDocWindowController"
+        )
+        tempStandDocController = cont
+        cont.space = Binding(
+            get: { self.currWSDoc!.model.workspace },
+            set: { self.currWSDoc!.model.workspace = $0 }
+        )
+//        cont.stand = Binding(
+//            get: { self.currWSDoc!.model.workspace.stands[index] },
+//            set: { self.currWSDoc!.model.workspace.stands[index] = $0 }
+//        )
+        
+        print("showTempStandDocWindow: Showing window")
+        cont.showWindow(self)
+        cont.window?.makeKeyAndOrderFront(self)
+        NSApp.activate(ignoringOtherApps: true)
+        print("showTempStandDocWindow: Window shown, isVisible: \(cont.window?.isVisible ?? false)")
     }
 }
 

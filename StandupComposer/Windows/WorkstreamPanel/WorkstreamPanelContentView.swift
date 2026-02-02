@@ -10,16 +10,15 @@ import SwiftUI
 struct WorkstreamPanelContentView: View {
     @Environment(\.dismiss) private var dismiss
     
-    @Binding var stream: Workstream
+    @Binding var space: Workspace
+    let stream: Workstream
     
     @State private var text = ""
     @State private var position = ScrollPosition(edge: .bottom)
     
     private func handleSubmit() {
-        if text.isEmpty {
-            return
-        }
-        stream.appendUpdate(.today, body: text)
+        if text.isEmpty { return }
+        space.addWorkstreamEntry(stream.id, text)
         text = ""
         position.scrollTo(edge: .bottom)
     }
@@ -55,15 +54,22 @@ struct WorkstreamPanelContentView: View {
             }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
-                    let days = stream.updatesByDay.keys.sorted()
-                    ForEach(days) { day in
-                        Text(day.formatted(style: .complete))
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                            .textSelection(.enabled)
-                        Divider()
-                            .padding(.bottom)
-                        DayUpdates(updates: stream.updatesByDay[day] ?? [])
+                    if stream.entries.isEmpty {
+                        Text("No updates")
+                            .font(.body)
+                            .foregroundStyle(.tertiary)
+                    } else {
+                        ForEach(stream.entries) { entry in
+                            HStack {
+                                Image(systemName: "circle.fill")
+                                    .font(.system(size: 6))
+                                    .foregroundStyle(.tertiary)
+                                Text(entry.body)
+                                    .font(.title3)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                            }
+                        }
                     }
                 }
             }
@@ -108,11 +114,17 @@ struct WorkstreamPanelContentView: View {
 }
 
 #Preview {
-    @Previewable @State var stream = Workstream()
-    WorkstreamPanelContentView(stream: $stream)
-        .frame(width: 400, height: 200)
-        .onAppear{
-            stream.appendUpdate(.yesterday, body: "I did some work!")
-            stream.appendUpdate(.today, body: "I did some more work!")
+    @Previewable @State var space = Workspace()
+    VStack {
+        if let stream = space.streams.first {
+            WorkstreamPanelContentView(
+                space: $space,
+                stream: stream
+            )
         }
+    }
+    .frame(width: 400, height: 200)
+    .onAppear{
+        let _ = space.createWorkstream("Preview stream")
+    }
 }

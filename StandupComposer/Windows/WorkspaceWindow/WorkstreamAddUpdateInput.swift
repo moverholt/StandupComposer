@@ -1,22 +1,17 @@
 import SwiftUI
 
 struct WorkstreamAddUpdateInput: View {
-    @Binding var stream: Workstream
+    @Binding var space: Workspace
+    let stream: Workstream
     
     @State private var text = ""
     
-    private func handleSubmit() {
-        if text.isEmpty {
-            return
-        }
-        stream.appendUpdate(.today, body: text)
-        text = ""
-    }
-    
     private func submit() {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = text.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
         guard trimmed.isEmpty == false else { return }
-        stream.appendUpdate(.today, body: trimmed)
+        space.addWorkstreamEntry(stream.id, trimmed)
         text = ""
     }
     
@@ -26,10 +21,14 @@ struct WorkstreamAddUpdateInput: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
             HStack(alignment: .bottom, spacing: 8) {
-                TextField("What did you do?", text: $text, axis: .vertical)
-                    .textFieldStyle(.roundedBorder)
-                    .lineLimit(3, reservesSpace: true)
-                    .onSubmit { submit() }
+                TextField(
+                    "What did you do?",
+                    text: $text,
+                    axis: .vertical
+                )
+                .textFieldStyle(.roundedBorder)
+                .lineLimit(3, reservesSpace: true)
+                .onSubmit { submit() }
                 Button {
                     submit()
                 } label: {
@@ -38,7 +37,11 @@ struct WorkstreamAddUpdateInput: View {
                 }
                 .keyboardShortcut(.return, modifiers: [.command])
                 .buttonStyle(.borderedProminent)
-                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(
+                    text.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    ).isEmpty
+                )
             }
         }
         .padding()
@@ -54,7 +57,13 @@ struct WorkstreamAddUpdateInput: View {
 }
 
 #Preview {
-    @Previewable @State var stream = Workstream()
-    WorkstreamAddUpdateInput(stream: $stream)
-        .padding()
+    @Previewable @State var space = Workspace()
+    VStack {
+        if let stream = space.streams.first {
+            WorkstreamAddUpdateInput(space: $space, stream: stream)
+        }
+    }
+    .onAppear {
+        let _ = space.createWorkstream("Test Workstream")
+    }
 }

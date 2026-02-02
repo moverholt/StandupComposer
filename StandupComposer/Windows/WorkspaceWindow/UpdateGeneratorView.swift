@@ -96,17 +96,17 @@ struct UpdateGeneratorView: View {
 }
 
 #Preview {
-    @Previewable @State var ws = Workstream()
-    @Previewable @State var su = Standup.WorkstreamGenUpdate(Workstream())
-    UpdateGeneratorView(
-        update: $su,
-        prompt: wsUpdatePrompt(ws, [], ws.updates)
-    )
-    .padding()
-    .environment(UserSettings())
-    .background(
-        .thinMaterial,
-        in: RoundedRectangle(cornerRadius: 12)
-    )
-    .padding()
+//    @Previewable @State var ws = Workstream()
+//    @Previewable @State var su = Standup.WorkstreamGenUpdate(Workstream())
+//    UpdateGeneratorView(
+//        update: $su,
+//        prompt: wsUpdatePrompt(ws, [], ws.updates)
+//    )
+//    .padding()
+//    .environment(UserSettings())
+//    .background(
+//        .thinMaterial,
+//        in: RoundedRectangle(cornerRadius: 12)
+//    )
+//    .padding()
 }

@@ -31,7 +31,7 @@ enum WorkspaceSelected: Codable, Hashable {
 }
 
 struct WorkspaceContentView: View {
-    @Binding var workspace: Workspace
+    @Binding var space: Workspace
     @Environment(UserSettings.self) var settings
 
     @State private var ovm = WorkspaceOverlayViewModel()
@@ -40,16 +40,16 @@ struct WorkspaceContentView: View {
         settings.workspaceSelected
     }
 
-    private var selectedWorkstreamIndex: Int? {
+    private var selectedWorkstream: Workstream? {
         if case let .workstream(id) = selected {
-            return workspace.streams.findIndex(id: id)
+            return space.streams.find(id: id)
         }
         return nil
     }
     
-    private var selectedStandupIndex: Int? {
+    private var selectedStandup: Standup? {
         if case let .standup(id) = selected {
-            return workspace.stands.findIndex(id: id)
+            return space.stands.find(id: id)
         }
         return nil
     }
@@ -64,18 +64,31 @@ struct WorkspaceContentView: View {
     }
     
     private func submitOverlay() {
-        if let id = ovm.workstreamAddUpdateId {
-            workspace.addWorkstreamUpdate(
-                id: id,
-                body: ovm.text,
-                standId: ovm.workstreamAddUpdateStandId
-            )
-        } else if let id = ovm.workstreamAddPlanId {
-            workspace.addWorkstreamPlan(
-                id: id,
-                body: ovm.text,
-                standId: ovm.workstreamAddPlanStandId
-            )
+        let trimmed = ovm.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesPlus24EntryId {
+            var sp = space
+            guard var st = sp.getStand(standId),
+                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
+            else {
+                ovm.close()
+                return
+            }
+            st.entries[idx].plus24DraftNotes = trimmed.isEmpty ? nil : trimmed
+            sp.updateStandup(st)
+            space = sp
+        } else if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesEntryId {
+            var sp = space
+            guard var st = sp.getStand(standId),
+                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
+            else {
+                ovm.close()
+                return
+            }
+            st.entries[idx].minus24DraftNotes = trimmed.isEmpty ? nil : trimmed
+            sp.updateStandup(st)
+            space = sp
+        } else if !trimmed.isEmpty, let id = ovm.workstreamAddUpdateId {
+            space.addWorkstreamEntry(id, trimmed)
         }
         ovm.close()
     }
@@ -85,7 +98,7 @@ struct WorkspaceContentView: View {
         NavigationSplitView(
             columnVisibility: $settings.workspaceColumnVisibility
         ) {
-            WorkspaceNavList(workspace: $workspace)
+            WorkspaceNavList(workspace: $space)
                 .listStyle(.sidebar)
                 .navigationSplitViewColumnWidth(
                     min: 200,
@@ -95,19 +108,16 @@ struct WorkspaceContentView: View {
         } detail: {
             VStack(spacing: 0) {
                 if selected == .newWorkstream {
-                    WorkspaceNewWorkstreamView(workspace: $workspace)
+                    WorkspaceNewWorkstreamView(space: $space)
                 } else if selected == .newStandup {
-                    WorkspaceNewStandupView(workspace: $workspace)
-                } else if let index = selectedWorkstreamIndex {
+                    WorkspaceNewStandupView(space: $space)
+                } else if let stream = selectedWorkstream {
                     WorkspaceWorkstreamDetailView(
-                        space: workspace,
-                        stream: $workspace.streams[index]
+                        space: $space,
+                        stream: stream
                     )
-                } else if let index = selectedStandupIndex {
-                    WorkspaceStandupDetailView(
-                        stand: $workspace.stands[index],
-                        workspace: $workspace
-                    )
+                } else if let stand = selectedStandup {
+                    WorkspaceStandupDetailView(space: $space, stand: stand)
                 } else {
                     Text("Hello! (Nothing selected)")
                 }
@@ -129,15 +139,15 @@ struct WorkspaceContentView: View {
         .inspector(
             isPresented: $settings.workspaceShowInspector,
             content: {
-                if let index = selectedWorkstreamIndex {
+                if let stream = selectedWorkstream {
                     WorkspaceWorkstreamInspectorView(
-                        stream: $workspace.streams[index],
-                        space: $workspace
+                        space: $space,
+                        stream: stream
                     )
-                } else if let index = selectedStandupIndex {
+                } else if let stand = selectedStandup {
                     WorkspaceStandupInspectorView(
-                        stand: $workspace.stands[index],
-                        space: $workspace
+                        space: $space,
+                        stand: stand
                     )
                 } else {
                     EmptyView()
@@ -161,18 +171,13 @@ struct WorkspaceContentView: View {
 }
 
 #Preview {
-    @Previewable @State var workspace = Workspace()
+    @Previewable @State var space = Workspace()
     @Previewable @State var settings = UserSettings()
-    WorkspaceContentView(workspace: $workspace)
+    WorkspaceContentView(space: $space)
         .environment(settings)
         .onAppear {
-            let ws1 = Workstream()
-            let ws2 = Workstream()
-            workspace.streams.append(ws1)
-            workspace.streams.append(ws2)
-            let stand = Standup(.today, title: "Today")
-            workspace.stands.append(stand)
-            settings.workspaceSelected = .standup(stand.id)
+            let wsId1 = space.createWorkstream("Workstream 1", "PREV-1")
+            let wsId2 = space.createWorkstream("Workstream 2", "PREV-2")
         }
 }
 

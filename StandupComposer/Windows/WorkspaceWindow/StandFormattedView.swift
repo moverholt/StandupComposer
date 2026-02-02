@@ -88,7 +88,7 @@ private struct SelectableFormattedTextView: NSViewRepresentable {
 
 struct StandFormattedView: View {
     @Environment(UserSettings.self) var settings
-    @Binding var stand: Standup
+    let stand: Standup
 
     @State private var partial: String?
     @State private var loading = false
@@ -97,85 +97,87 @@ struct StandFormattedView: View {
 
     @MainActor
     private func run() async {
-        loading = true
-        error = nil
-        partial = ""
-        let prompt = slackFormatterPrompt(stand, jiraBaseUrl: settings.jiraUrl)
-        let stream = streamOpenAIChat(
-            prompt: prompt,
-            config: OpenAIConfig(settings)
-        )
-        do {
-            for try await partial in stream {
-                self.partial = partial
-            }
-            stand.formattedSlack = self.partial
-        } catch {
-            self.error = error.localizedDescription
-        }
-        partial = nil
-        loading = false
+//        loading = true
+//        error = nil
+//        partial = ""
+//        let prompt = slackFormatterPrompt(stand, jiraBaseUrl: settings.jiraUrl)
+//        let stream = streamOpenAIChat(
+//            prompt: prompt,
+//            config: OpenAIConfig(settings)
+//        )
+//        do {
+//            for try await partial in stream {
+//                self.partial = partial
+//            }
+//            stand.formattedSlack = self.partial
+//        } catch {
+//            self.error = error.localizedDescription
+//        }
+//        partial = nil
+//        loading = false
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let body = partial ?? stand.formattedSlack {
-                SelectableFormattedTextView(content: body, selectAllRequested: $selectAllRequested)
-                    .frame(minHeight: 120, maxHeight: .infinity)
-            }
-            HStack(spacing: 8) {
-                Button(
-                    action: {
-                        Task {
-                            await run()
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 8) {
+                if let body = partial ?? stand.formattedSlack {
+                    SelectableFormattedTextView(content: body, selectAllRequested: $selectAllRequested)
+                        .frame(minHeight: 120, maxHeight: .infinity)
+                }
+                HStack(spacing: 8) {
+                    Button(
+                        action: {
+                            Task {
+                                await run()
+                            }
+                        }
+                    ) {
+                        Label("Format", systemImage: "wand.and.stars")
+                    }
+                    .disabled(loading)
+                    if partial != nil || stand.formattedSlack != nil {
+                        Button(action: { selectAllRequested = true }) {
+                            Label("Select All", systemImage: "doc.on.doc")
                         }
                     }
-                ) {
-                    Label("Format", systemImage: "wand.and.stars")
                 }
-                .disabled(loading)
-                if partial != nil || stand.formattedSlack != nil {
-                    Button(action: { selectAllRequested = true }) {
-                        Label("Select All", systemImage: "doc.on.doc")
-                    }
+                if loading {
+                    ProgressView()
+                        .scaleEffect(0.8)
                 }
             }
-            if loading {
-                ProgressView()
-                    .scaleEffect(0.8)
-            }
+//            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
     }
 }
 
 #Preview {
-    @Previewable @State var stand = Standup(.today)
-    StandFormattedView(stand: $stand)
+    @Previewable @State var stand = Standup(UUID())
+    StandFormattedView(stand: stand)
         .frame(width: 600, height: 400)
         .environment(UserSettings())
         .onAppear {
-            var ws1 = Workstream()
+            var ws1 = Workstream(UUID())
             ws1.issueKey = "ZZZZ-9998"
 
             var up1 = Standup.WorkstreamGenUpdate(ws1)
-            up1.body = "This is a test update."
-            stand.prevDay.append(up1)
-
-            var ws2 = Workstream()
-            ws2.issueKey = "ZZZZ-9999"
-
-            var up2 = Standup.WorkstreamGenUpdate(ws2)
-            up2.body = "This is another test update."
-            stand.prevDay.append(up2)
-
-            var pl1 = Standup.WorkstreamGenUpdate(ws1)
-            pl1.body = "This is a plan."
-            stand.today.append(pl1)
-
-            var pl2 = Standup.WorkstreamGenUpdate(ws2)
-            pl2.body = "This is another test plan."
-            stand.today.append(pl2)
+//            up1.body = "This is a test update."
+//            stand.prevDay.append(up1)
+//
+//            var ws2 = Workstream()
+//            ws2.issueKey = "ZZZZ-9999"
+//
+//            var up2 = Standup.WorkstreamGenUpdate(ws2)
+//            up2.body = "This is another test update."
+//            stand.prevDay.append(up2)
+//
+//            var pl1 = Standup.WorkstreamGenUpdate(ws1)
+//            pl1.body = "This is a plan."
+//            stand.today.append(pl1)
+//
+//            var pl2 = Standup.WorkstreamGenUpdate(ws2)
+//            pl2.body = "This is another test plan."
+//            stand.today.append(pl2)
         }
 }

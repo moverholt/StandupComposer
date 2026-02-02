@@ -27,15 +27,15 @@ struct InlineAddWorkstreamUpdate: View {
     }
 
     private func addDraft() {
-        let text = trimmed
-        guard !text.isEmpty else { return }
-        stream.appendUpdate(.today, body: text)
-        draft = ""
+//        let text = trimmed
+//        guard !text.isEmpty else { return }
+//        stream.appendUpdate(.today, body: text)
+//        draft = ""
     }
 }
 
 #Preview {
-    @Previewable @State var ws = Workstream()
+    @Previewable @State var ws = Workstream(UUID())
     InlineAddWorkstreamUpdate(stream: $ws)
         .padding()
 }

@@ -10,17 +10,18 @@ import SwiftUI
 struct WorkspaceNewStandupView: View {
     @Environment(UserSettings.self) var settings
     @Environment(WorkspaceOverlayViewModel.self) private var ovm
-    @Binding var workspace: Workspace
+    @Binding var space: Workspace
     
     @State private var title: String = "New Standup"
     
+    @MainActor
     private func handleSubmit() {
-        let stand = workspace.createStandup(title)
-        settings.workspaceSelected = .standup(stand.id)
+        let id = space.createStandup(title)
+        settings.workspaceSelected = .standup(id)
     }
     
     private var createDisabled: Bool {
-        title.isEmpty || workspace.streams.isEmpty
+        title.isEmpty || space.streams.isEmpty
     }
     
     var body: some View {
@@ -44,7 +45,7 @@ struct WorkspaceNewStandupView: View {
                 ) {
                     TextField("Title", text: $title)
                 }
-                if workspace.streams.isEmpty {
+                if space.streams.isEmpty {
                     Text("No Active Workstreams")
                         .foregroundStyle(.primary)
                         .italic()
@@ -52,22 +53,22 @@ struct WorkspaceNewStandupView: View {
                     Section {
                         Text("-24")
                             .font(.largeTitle)
-                        ForEach(workspace.streams.active) { stream in
+                        ForEach(space.streams.active) { stream in
                             StreamHeaderView(stream: stream)
-                            if let i = workspace.streams.findIndex(id: stream.id) {
-                                Prev24StreamView(stream: $workspace.streams[i])
-                                    .padding(.bottom)
+                            if let i = space.streams.findIndex(id: stream.id) {
+//                                Prev24StreamView(stream: $pace.streams[i])
+//                                    .padding(.bottom)
                             }
                         }
                     }
                     Section {
                         Text("+24")
                             .font(.largeTitle)
-                        ForEach(workspace.streams.active) { stream in
+                        ForEach(space.streams.active) { stream in
                             StreamHeaderView(stream: stream)
-                            if let i = workspace.streams.findIndex(id: stream.id) {
-                                Next24StreamView(stream: $workspace.streams[i])
-                                    .padding(.bottom)
+                            if let i = space.streams.findIndex(id: stream.id) {
+//                                Next24StreamView(stream: $pace.streams[i])
+//                                    .padding(.bottom)
                             }
                         }
                     }
@@ -109,21 +110,15 @@ extension WorkspaceNewStandupView {
 }
 
 #Preview {
-    @Previewable @State var workspace = Workspace()
-    WorkspaceNewStandupView(workspace: $workspace)
+    @Previewable @State var space = Workspace()
+    WorkspaceNewStandupView(space: $space)
         .environment(UserSettings())
         .environment(WorkspaceOverlayViewModel())
         .frame(width: 400, height: 600)
         .onAppear {
-            var ws1 = Workstream()
+            var ws1 = Workstream(space.id)
             ws1.title = "Add new cheeses to the cheese menu"
             ws1.issueKey = "FOOD-10"
-            
-            ws1.appendUpdate(.today, body: "Met with product manager")
-            ws1.appendPlan("Plan 1")
-            
-            workspace.streams.append(ws1)
-            
         }
 }
 

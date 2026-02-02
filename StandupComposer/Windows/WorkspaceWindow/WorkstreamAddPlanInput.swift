@@ -6,10 +6,10 @@ struct WorkstreamAddPlanInput: View {
     @State private var text = ""
     
     private func submit() {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.isEmpty == false else { return }
-        stream.appendPlan(trimmed)
-        text = ""
+//        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+//        guard trimmed.isEmpty == false else { return }
+//        stream.appendPlan(trimmed)
+//        text = ""
     }
     
     var body: some View {
@@ -46,7 +46,7 @@ struct WorkstreamAddPlanInput: View {
 }
 
 #Preview {
-    @Previewable @State var stream = Workstream()
+    @Previewable @State var stream = Workstream(UUID())
     WorkstreamAddPlanInput(stream: $stream)
         .padding()
 }

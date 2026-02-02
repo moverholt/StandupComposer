@@ -9,8 +9,7 @@ import Cocoa
 import SwiftUI
 
 class HUDUpdatePanelController: NSWindowController {
-    var wspId: Workspace.ID!
-    var streams: Binding<[Workstream]>!
+    var space: Binding<Workspace>!
     var panel: HUDUpdatePanel! { self.window as? HUDUpdatePanel }
     
     override func windowDidLoad() {
@@ -22,7 +21,7 @@ class HUDUpdatePanelController: NSWindowController {
         panel.backgroundColor = .clear
 
         let hostingController = NSHostingController(
-            rootView: HUDUpdateContentView(models: streams)
+            rootView: HUDUpdateContentView(space: space)
         )
         self.contentViewController = hostingController
         panel.setFrameAutosaveName("hud-update-panel-4")

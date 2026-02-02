@@ -9,24 +9,39 @@ import SwiftUI
 
 struct WorkspaceWorkstreamInspectorView: View {
     @Environment(UserSettings.self) var settings
-    @Binding var stream: Workstream
     @Binding var space: Workspace
-    
+    let stream: Workstream
+
     @State private var showConfirm = false
     
     private var issueKeyBinding: Binding<String> {
         Binding(
             get: { stream.issueKey ?? "" },
-            set: { stream.issueKey = $0.isEmpty ? nil : $0 }
+            set: {
+                var newStream = stream
+                newStream.issueKey = $0.isEmpty ? nil : $0
+                space.updateWorkstream(newStream)
+            }
         )
     }
-
+    
+    private var streamBinding: Binding<Workstream> {
+        Binding(
+            get: { stream },
+            set: { space.updateWorkstream($0) }
+        )
+    }
+    
     var body: some View {
         Form {
             Section("General") {
-                TextField("Title", text: $stream.title)
-                TextField("Jira Issue Key", text: issueKeyBinding, prompt: Text("e.g. PROJ-123"))
-                Picker("Status", selection: $stream.status) {
+                TextField("Title", text: streamBinding.title)
+                TextField(
+                    "Jira Issue Key",
+                    text: issueKeyBinding,
+                    prompt: Text("e.g. PROJ-123")
+                )
+                Picker("Status", selection: streamBinding.status) {
                     ForEach(Workstream.Status.allCases, id: \.self) { status in
                         Text(status.description.capitalized).tag(status)
                     }
@@ -68,10 +83,16 @@ struct WorkspaceWorkstreamInspectorView: View {
 }
 
 #Preview {
-    @Previewable @State var stream = Workstream()
     @Previewable @State var space = Workspace()
-    WorkspaceWorkstreamInspectorView(stream: $stream, space: $space)
-        .environment(UserSettings())
-        .padding()
-        .frame(width: 300)
+    VStack {
+        if let stream = space.streams.first {
+            WorkspaceWorkstreamInspectorView(space: $space, stream: stream)
+        }
+    }
+    .onAppear {
+        var s1 = space.createWorkstream("Stream 1", "S1-1")
+    }
+    .environment(UserSettings())
+    .padding()
+    .frame(width: 300)
 }

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WorkspaceNewWorkstreamView: View {
     @Environment(UserSettings.self) var settings
-    @Binding var workspace: Workspace
+    @Binding var space: Workspace
     @State private var title = "New Workstream"
     @State private var issueKey = ""
     @State private var jiraStories: [JiraStory] = []
@@ -29,12 +29,9 @@ struct WorkspaceNewWorkstreamView: View {
     private func handleSubmit() {
         let t = title.trimmingCharacters(in: .whitespaces)
         if t.isEmpty { return }
-        var stream = Workstream()
-        stream.title = t
-        let k = issueKey.trimmingCharacters(in: .whitespaces)
-        stream.issueKey = k.isEmpty ? nil : k
-        workspace.streams.append(stream)
-        settings.workspaceSelected = .workstream(stream.id)
+        let key = issueKey.trimmingCharacters(in: .whitespaces)
+        var id = space.createWorkstream(title, issueKey)
+        settings.workspaceSelected = .workstream(id)
     }
 
     private func fillFromJiraStory(_ story: JiraStory) {
@@ -209,8 +206,8 @@ private struct JiraStoryPickerList: View {
 }
 
 #Preview {
-    @Previewable @State var workspace = Workspace()
-    WorkspaceNewWorkstreamView(workspace: $workspace)
+    @Previewable @State var space = Workspace()
+    WorkspaceNewWorkstreamView(space: $space)
         .environment(UserSettings.shared)
         .frame(width: 420, height: 560)
 }

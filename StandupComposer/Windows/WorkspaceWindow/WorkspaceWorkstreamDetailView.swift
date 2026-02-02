@@ -9,8 +9,8 @@ import SwiftUI
 
 struct WorkspaceWorkstreamDetailView: View {
     @Environment(UserSettings.self) var settings
-    let space: Workspace
-    @Binding var stream: Workstream
+    @Binding var space: Workspace
+    let stream: Workstream
 
     private func jiraBrowseURL(issueKey: String) -> URL? {
         let base = settings.jiraUrl.trimmingCharacters(in: .whitespaces)
@@ -70,17 +70,8 @@ struct WorkspaceWorkstreamDetailView: View {
                             .font(.title2)
                         Spacer()
                     }
-                    WorkstreamUpdatesScrollView(space: space, stream: $stream)
-                    WorkstreamAddUpdateInput(stream: $stream)
-                }
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("Plans")
-                            .font(.title2)
-                        Spacer()
-                    }
-                    WorkstreamDetailPlansScrollview(stream: $stream)
-                    WorkstreamAddPlanInput(stream: $stream)
+                    WorkstreamUpdatesScrollView(space: $space, stream: stream)
+                    WorkstreamAddUpdateInput(space: $space, stream: stream)
                 }
             }
         }
@@ -88,15 +79,14 @@ struct WorkspaceWorkstreamDetailView: View {
 }
 
 #Preview {
-    @Previewable @State var s1 = Workstream()
-    WorkspaceWorkstreamDetailView(
-        space: Workspace(),
-        stream: $s1
-    )
+    @Previewable @State var space = Workspace()
+    VStack {
+        if let stream = space.streams.first {
+            WorkspaceWorkstreamDetailView(space: $space, stream: stream)
+        }
+    }
     .environment(UserSettings.shared)
     .onAppear {
-        s1.issueKey = "TEST-123"
-        s1.appendUpdate(.today, body: "This is an update")
-        s1.appendPlan("This is something I will do")
+        let _ = space.createWorkstream("Preview Stream", "PREV-1")
     }
 }

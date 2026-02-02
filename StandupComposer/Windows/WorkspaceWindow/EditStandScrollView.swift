@@ -8,43 +8,51 @@
 import SwiftUI
 
 struct EditStandScrollView: View {
-    @Binding var stand: Standup
-    @Binding var workspace: Workspace
+    @Binding var space: Workspace
+    let stand: Standup
     
+    @State private var showWorkstreamPicker = false
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 48) {
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("-24")
-                            .font(.largeTitle)
-                            .fontDesign(.monospaced)
-                        Spacer()
+            LazyVStack(alignment: .leading, spacing: 32) {
+                HStack {
+                    if let prev = space.getStand(stand.previousStandupId) {
+                        Text("Previous standup: \(prev.title)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text("This is the first standup")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    Divider()
-                        .padding(.bottom)
-                    VStack(alignment: .leading, spacing: 36) {
-                        ForEach(stand.prevDay) { upd in
-                            if let ws = workspace.streams.find(id: upd.ws.id) {
-                                WSUpdateRowView(stream: ws, stand: $stand)
-                            }
-                        }
+                    Spacer()
+                    Button {
+                        showWorkstreamPicker = true
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.title2)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.borderless)
+                    .popover(
+                        isPresented: $showWorkstreamPicker,
+                        arrowEdge: .top
+                    ) {
+                        WorkstreamPickerPopover(space: $space, stand: stand)
+                            .frame(minWidth: 220, minHeight: 200)
                     }
                 }
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Text("+24")
-                            .font(.largeTitle)
-                            .fontDesign(.monospaced)
-                        Spacer()
-                    }
-                    Divider()
-                        .padding(.bottom)
-                    VStack(alignment: .leading, spacing: 36) {
-                        ForEach(stand.today) { upd in
-                            if let ws = workspace.streams.find(id: upd.ws.id) {
-                                WSPlanRowView(stream: ws, stand: $stand)
-                            }
+                .padding(.bottom, 8)
+                ForEach(stand.entries) { entry in
+                    Section {
+                        if let stream = space.getStream(entry.workstreamId) {
+                            EditStandEntryCard(
+                                space: $space,
+                                stand: stand,
+                                entry: entry,
+                                stream: stream
+                            )
                         }
                     }
                 }
@@ -55,29 +63,23 @@ struct EditStandScrollView: View {
 }
 
 #Preview {
-    @Previewable @State var stand = Standup(.today)
-    @Previewable @State var workspace = Workspace()
-    EditStandScrollView(stand: $stand, workspace: $workspace)
-        .padding()
-        .frame(width: 700, height: 400)
-        .onAppear {
-            var ws1 = Workstream()
-            ws1.issueKey = "JWT-134"
-            ws1.title = "Adding new columns to the beef view"
-            ws1.appendUpdate(
-                .today,
-                body: "Added a new column for the 'Flavor' column"
-            )
-            ws1.appendUpdate(
-                .today,
-                body: "Talked to mgr about how to make it easier to filter by flavor"
-            )
-            workspace.streams.append(ws1)
-            var ws2 = Workstream()
-            ws2.issueKey = "JWT-135"
-            ws2.title = "Adding new flavors to the beef model"
-            workspace.streams.append(ws2)
-            stand.addWorkstream(ws1)
-            stand.addWorkstream(ws2)
+    @Previewable @State var space = Workspace()
+    TabView {
+        Tab("Edit", systemImage: "pencil") {
+            if let stand = space.stands.last {
+                EditStandScrollView(space: $space, stand: stand)
+            }
         }
+    }
+    .frame(width: 700, height: 400)
+    .environment(WorkspaceOverlayViewModel())
+    .environment(UserSettings())
+    .onAppear {
+        let ws1Id = space.createWorkstream("Workstream 1", "WORK-1")
+        let _ = space.createWorkstream("Workstream 2", "WORK-2")
+        let stand1Id = space.createStandup("Standup 1")
+        space.publishStandup(stand1Id)
+        space.addWorkstreamEntry(ws1Id, "I completed something")
+        let _ = space.createStandup("Standup 2")
+    }
 }

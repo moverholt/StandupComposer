@@ -1,30 +1,17 @@
 import SwiftUI
 
 public struct WorkstreamUpdatesScrollView: View {
-    let space: Workspace
-    @Binding var stream: Workstream
-    
-    private var last60Days: [IsoDay] {
-        (0..<60).map({ IsoDay.today.subDays($0) }).reversed()
-    }
-    
+    @Binding var space: Workspace
+    let stream: Workstream
+
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading) {
-                if stream.updatesByDay.count == 0 {
+                if stream.entries.count == 0 {
                     Text("None")
                 } else {
-                    ForEach(last60Days) { day in
-                        if let updates = stream.updatesByDay[day] {
-                            Text(day.formatted(style: .abbreviated))
-                                .foregroundStyle(.secondary)
-                                .font(.title3)
-                            WorkstreamUpdatesDay(
-                                updates: updates,
-                                space: space,
-                                stream: $stream
-                            )
-                        }
+                    ForEach(stream.entries) { entry in
+                        WorkstreamEntry(space: $space, entry: entry)
                     }
                 }
             }
@@ -33,9 +20,14 @@ public struct WorkstreamUpdatesScrollView: View {
 }
 
 #Preview {
-    @Previewable @State var stream = Workstream()
-    WorkstreamUpdatesScrollView(
-        space: Workspace(),
-        stream: $stream
-    )
+    @Previewable @State var space = Workspace()
+    VStack {
+        if let stream = space.streams.first {
+            WorkstreamUpdatesScrollView(space: $space, stream: stream)
+        }
+    }
+    .onAppear {
+        let wsId = space.createWorkstream("Preview Stream", "PREV-1")
+        space.addWorkstreamEntry(wsId, "This is a workstream update")
+    }
 }
