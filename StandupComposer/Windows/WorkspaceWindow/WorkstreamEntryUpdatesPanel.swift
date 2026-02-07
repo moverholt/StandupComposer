@@ -9,13 +9,7 @@ struct WorkstreamEntryUpdatesPanel: View {
     let entry: Standup.WorkstreamEntry
 
     private var updatesInRange: [Workstream.Entry] {
-        guard let stream = space.getStream(entry.workstreamId) else {
-            return []
-        }
-        return stream.entries.filter {
-            $0.created >= stand.rangeStart &&
-            $0.created <= (stand.rangeEnd ?? Date.distantFuture)
-        }
+        space.getStream(entry.workstreamId)?.entries(for: stand) ?? []
     }
 
     var body: some View {

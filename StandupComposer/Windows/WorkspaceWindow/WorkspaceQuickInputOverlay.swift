@@ -10,6 +10,10 @@ class WorkspaceOverlayViewModel {
     var draftNotesStandId: Standup.ID?
     var draftNotesEntryId: Standup.WorkstreamEntry.ID?
     var draftNotesPlus24EntryId: Standup.WorkstreamEntry.ID?
+    var finalStandId: Standup.ID?
+    var finalEntryId: Standup.WorkstreamEntry.ID?
+    var finalPlus24StandId: Standup.ID?
+    var finalPlus24EntryId: Standup.WorkstreamEntry.ID?
     
     func close() {
         showOverlay = false
@@ -18,6 +22,10 @@ class WorkspaceOverlayViewModel {
         draftNotesStandId = nil
         draftNotesEntryId = nil
         draftNotesPlus24EntryId = nil
+        finalStandId = nil
+        finalEntryId = nil
+        finalPlus24StandId = nil
+        finalPlus24EntryId = nil
     }
     
     func showWorkstreamAddUpdate(_ id: Workstream.ID) {
@@ -27,6 +35,11 @@ class WorkspaceOverlayViewModel {
         }
         draftNotesStandId = nil
         draftNotesEntryId = nil
+        draftNotesPlus24EntryId = nil
+        finalStandId = nil
+        finalEntryId = nil
+        finalPlus24StandId = nil
+        finalPlus24EntryId = nil
         workstreamAddUpdateId = id
         if !showOverlay {
             showOverlay = true
@@ -40,6 +53,10 @@ class WorkspaceOverlayViewModel {
         }
         workstreamAddUpdateId = nil
         draftNotesPlus24EntryId = nil
+        finalStandId = nil
+        finalEntryId = nil
+        finalPlus24StandId = nil
+        finalPlus24EntryId = nil
         draftNotesStandId = standId
         draftNotesEntryId = entryId
         text = initialText
@@ -55,8 +72,50 @@ class WorkspaceOverlayViewModel {
         }
         workstreamAddUpdateId = nil
         draftNotesEntryId = nil
+        finalStandId = nil
+        finalEntryId = nil
+        finalPlus24StandId = nil
+        finalPlus24EntryId = nil
         draftNotesStandId = standId
         draftNotesPlus24EntryId = entryId
+        text = initialText
+        if !showOverlay {
+            showOverlay = true
+        }
+    }
+    
+    func showEditFinal(standId: Standup.ID, entryId: Standup.WorkstreamEntry.ID, initialText: String) {
+        if finalEntryId == entryId {
+            close()
+            return
+        }
+        workstreamAddUpdateId = nil
+        draftNotesStandId = nil
+        draftNotesEntryId = nil
+        draftNotesPlus24EntryId = nil
+        finalPlus24StandId = nil
+        finalPlus24EntryId = nil
+        finalStandId = standId
+        finalEntryId = entryId
+        text = initialText
+        if !showOverlay {
+            showOverlay = true
+        }
+    }
+    
+    func showEditPlus24Final(standId: Standup.ID, entryId: Standup.WorkstreamEntry.ID, initialText: String) {
+        if finalPlus24EntryId == entryId {
+            close()
+            return
+        }
+        workstreamAddUpdateId = nil
+        draftNotesStandId = nil
+        draftNotesEntryId = nil
+        draftNotesPlus24EntryId = nil
+        finalStandId = nil
+        finalEntryId = nil
+        finalPlus24StandId = standId
+        finalPlus24EntryId = entryId
         text = initialText
         if !showOverlay {
             showOverlay = true
@@ -90,11 +149,29 @@ struct WorkspaceQuickInputOverlay: View {
         ovm.draftNotesEntryId != nil || ovm.draftNotesPlus24EntryId != nil
     }
     
+    private var isEditFinal: Bool {
+        ovm.finalEntryId != nil || ovm.finalPlus24EntryId != nil
+    }
+    
+    private var isSaveMode: Bool {
+        isDraftNotes || isEditFinal
+    }
+    
+    private var overlayPlaceholder: String {
+        if isEditFinal { return "Final text…" }
+        if isDraftNotes { return "Add notes…" }
+        return "Type something here"
+    }
+    
     var body: some View {
         @Bindable var ovm = ovm
         VStack(spacing: 8) {
             HStack {
-                if ovm.draftNotesEntryId != nil || ovm.draftNotesPlus24EntryId != nil {
+                if ovm.finalPlus24EntryId != nil {
+                    Text("Final (+24)")
+                } else if ovm.finalEntryId != nil {
+                    Text("Final")
+                } else if ovm.draftNotesEntryId != nil || ovm.draftNotesPlus24EntryId != nil {
                     Text("Draft notes")
                 } else if let id = ovm.workstreamAddUpdateId {
                     Text("Adding update to workstream: \(id)")
@@ -103,7 +180,7 @@ struct WorkspaceQuickInputOverlay: View {
             }
             GrowingTextView2UI(
                 text: $ovm.text,
-                placeholder: isDraftNotes ? "Add notes…" : "Type something here"
+                placeholder: overlayPlaceholder
             ) {
                 onSubmit()
             }
@@ -112,12 +189,12 @@ struct WorkspaceQuickInputOverlay: View {
                     ovm.close()
                 }
                 Spacer()
-                if isDraftNotes {
+                if isSaveMode {
                     Button("Save") {
                         onSubmit()
                     }
                     .keyboardShortcut(.defaultAction)
-                } else {
+                } else if let id = ovm.workstreamAddUpdateId {
                     Button("Add") {
                         onSubmit()
                     }

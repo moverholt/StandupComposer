@@ -74,6 +74,12 @@ struct Standup: Codable, Identifiable {
     var editing: Bool { status == .edit }
     var published: Bool { status == .published }
     
+    var day: IsoDay { rangeEnd?.isoDay ?? rangeStart.isoDay }
+
+    var hasContentToFormat: Bool {
+        entries.contains(where: { $0.minus24Draft != nil || $0.plus24Draft != nil })
+    }
+    
     mutating func publish() {
         rangeEnd = Date()
         status = .published
@@ -90,40 +96,7 @@ struct Standup: Codable, Identifiable {
         )
         entries.append(entry)
         return entry.id
-//        let upd = Standup.WorkstreamGenUpdate(stream)
-//        prevDay.append(upd)
-//        
-//        streamUpdates[stream.id] = .init(stream)
     }
-    
-//    mutating func addWorkstreamToPlans(_ stream: Workstream) {
-//        let pln = Standup.WorkstreamGenUpdate(stream)
-//        today.append(pln)
-//        
-//        incompletePlans[stream.id] = []
-//        for p in stream.plans.incomplete {
-//            incompletePlans[stream.id]?.insert(p.id)
-//        }
-//    }
-
-//    mutating func removeWorkstreamFromUpdates(_ streamId: Workstream.ID) {
-//        streamUpdates[streamId] = nil
-//    }
-//    
-//    mutating func removeWorkstreamFromPlans(_ streamId: Workstream.ID) {
-//        incompletePlans[streamId] = nil
-//    }
-//
-//    func debug() {
-//        print("==== Standup: \(id.uuidString) ====")
-//        print("Previous stand ID: \(previousStandId?.uuidString ?? "None")")
-//        for (_, strUpd) in streamUpdates {
-//            print("Stream: \(strUpd.ws.title)")
-//            print("Last update number: \(strUpd.lastUpdateNumber)")
-//            print("Last plan number: \(strUpd.lastPlanNumber)")
-//        }
-//        print("==== ====")
-//    }
 }
 
 extension Standup {
@@ -132,77 +105,7 @@ extension Standup {
         var description: String { self.rawValue }
     }
     
-//    enum Section {
-//        case prevDay
-//        case today
-//    }
-    
-//    func hasWorkstreamInPlan(_ streamId: Workstream.ID) -> Bool {
-//        incompletePlans[streamId] != nil
-////        let array = section == .prevDay ? prevDay : today
-////        return array.contains(where: { $0.ws.id == workstreamId })
-//    }
-    
-//    func hasWorkstreamInUpdates(_ streamId: Workstream.ID) -> Bool {
-//        streamUpdates[streamId] != nil
-//    }
-    
-//    func hasWorkstream(_ streamId: Workstream.ID, in section: Section) -> Bool {
-//        switch section {
-//        case .prevDay:
-//            hasWorkstreamInUpdates(streamId)
-//        case .today:
-//            hasWorkstreamInPlan(streamId)
-//        }
-//    }
-    
     mutating func touch() { updated = Date() }
-    
-//    mutating func addWorkstream(_ stream: Workstream, to section: Section) {
-//        let upd = Standup.WorkstreamGenUpdate(stream)
-//        switch section {
-//        case .prevDay:
-//            addWorkstreamToUpdates(stream)
-//            prevDay.append(upd)
-//        case .today:
-//            today.append(upd)
-//            addWorkstreamToPlans(stream)
-//        }
-//        touch()
-//    }
-    
-//    mutating func removeWorkstream(_ streamId: Workstream.ID, from section: Section) {
-//        switch section {
-//        case .prevDay:
-//            if let index = prevDay.firstIndex(where: { $0.ws.id == streamId }) {
-//                prevDay.remove(at: index)
-//            }
-//            removeWorkstreamFromUpdates(streamId)
-//        case .today:
-//            if let index = today.firstIndex(where: { $0.ws.id == streamId }) {
-//                today.remove(at: index)
-//            }
-//            removeWorkstreamFromPlans(streamId)
-//        }
-//        
-//        
-//        touch()
-//    }
-    
-//    mutating func addPrevPlan() {
-//    }
-    
-//    mutating func addUpdate(_ body: String, _ streamId: Workstream.ID?) {
-//        let upd = Update(body, streamId: streamId)
-//        updates.append(upd)
-//        touch()
-//    }
-    
-//    mutating func addPlan(_ body: String, _ streamId: Workstream.ID?) {
-//        let pln = Plan(body, streamId: streamId)
-//        plans.append(pln)
-//        touch()
-//    }
 }
 
 extension [Standup] {
@@ -269,56 +172,6 @@ extension Standup {
             self.ws = WorkstreamMeta(ws)
         }
     }
-    
-//    struct PrevPlan: Codable, Identifiable {
-//        let id: UUID
-//        let planId: Plan.ID
-//        let planBody: String
-//        var streamId: Workstream.ID?
-//        var completed: Bool
-//        var notes: String
-//    }
-//    
-//    struct Update: Codable, Identifiable {
-//        let id: UUID
-//        let body: String
-//        var streamId: Workstream.ID?
-//        let created: Date
-//        var updated: Date
-//
-//        init(_ body: String, streamId: Workstream.ID?) {
-//            id = UUID()
-//            self.body = body
-//            self.streamId = streamId
-//            let now = Date()
-//            created = now
-//            updated = now
-//        }
-//    }
-    
-//    struct Plan: Codable, Identifiable {
-//        let id: UUID
-//        let body: String
-//        let streamId: Workstream.ID?
-//        
-//        init(_ body: String, streamId: Workstream.ID?) {
-//            id = UUID()
-//            self.body = body
-//            self.streamId = streamId
-//        }
-//    }
-//    
-//    struct WorkstreamMarker: Codable {
-//        let ws: WorkstreamGenUpdate.WorkstreamMeta
-//        let lastUpdateNumber: Int
-//        let lastPlanNumber: Int
-//        
-//        init(_ stream: Workstream) {
-//            ws = WorkstreamGenUpdate.WorkstreamMeta(stream)
-//            lastUpdateNumber = stream.lastUpdateNumber ?? 0
-//            lastPlanNumber = stream.lastPlanNumber ?? 0
-//        }
-//    }
 }
 
 
@@ -351,5 +204,14 @@ extension Standup {
             self.standupId = standId
             self.workstreamId = streamId
         }
+        
+        var minus24: String? {
+            minus24Final ?? minus24Draft
+        }
+        
+        var plus24: String? {
+            plus24Draft ?? plus24Final
+        }
     }
 }
+

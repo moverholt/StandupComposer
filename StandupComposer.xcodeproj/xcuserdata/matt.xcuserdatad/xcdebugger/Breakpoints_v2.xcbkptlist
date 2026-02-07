@@ -135,22 +135,6 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "E3C4FA09-3CB9-4382-9AE7-A09F831A510A"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "StandupComposer/Model/Workspace/Workspace.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "308"
-            endingLineNumber = "308"
-            landmarkName = "Workspace"
-            landmarkType = "14">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
             uuid = "6F0F6767-8176-4907-83A7-03E4A5FDEA9C"
             shouldBeEnabled = "No"
             ignoreCount = "0"
@@ -158,9 +142,9 @@
             filePath = "StandupComposer/Model/Workspace/Workspace.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "112"
-            endingLineNumber = "112"
-            landmarkName = "createStandup(_:)"
+            startingLineNumber = "87"
+            endingLineNumber = "87"
+            landmarkName = "createStandup(_:start:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

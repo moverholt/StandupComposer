@@ -101,3 +101,11 @@ func streamOpenAIChat(
         }
     }
 }
+
+func generateText(prompt: String, config: OpenAIConfig) async throws -> String {
+    var last: String = ""
+    for try await partial in streamOpenAIChat(prompt: prompt, config: config) {
+        last = partial
+    }
+    return last
+}

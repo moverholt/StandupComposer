@@ -10,40 +10,11 @@ import SwiftUI
 struct EditStandScrollView: View {
     @Binding var space: Workspace
     let stand: Standup
-    
-    @State private var showWorkstreamPicker = false
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 32) {
-                HStack {
-                    if let prev = space.getStand(stand.previousStandupId) {
-                        Text("Previous standup: \(prev.title)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text("This is the first standup")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Button {
-                        showWorkstreamPicker = true
-                    } label: {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.title2)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.borderless)
-                    .popover(
-                        isPresented: $showWorkstreamPicker,
-                        arrowEdge: .top
-                    ) {
-                        WorkstreamPickerPopover(space: $space, stand: stand)
-                            .frame(minWidth: 220, minHeight: 200)
-                    }
-                }
-                .padding(.bottom, 8)
+                EditStandHeaderView(space: $space, stand: stand)
                 ForEach(stand.entries) { entry in
                     Section {
                         if let stream = space.getStream(entry.workstreamId) {

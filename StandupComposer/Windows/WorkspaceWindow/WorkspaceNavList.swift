@@ -9,54 +9,93 @@ import SwiftUI
 
 struct WorkspaceNavList: View {
     @Environment(UserSettings.self) var settings
-    @Binding var workspace: Workspace
+    @Binding var space: Workspace
     @State private var expandPaused = false
     @State private var expandComplete = false
+    @State private var expandPrevious = false
+
+    private var thisMonday: IsoDay { IsoDay.today.thisWeekMonday }
+    private var currentWeekSunday: IsoDay { thisMonday.addDays(6) }
+    private var currentWeekStands: [Standup] {
+        space.stands
+            .filter { $0.day >= thisMonday && $0.day <= currentWeekSunday && $0.published && $0.id != space.editingStandup?.id }
+            .sorted { $0.day > $1.day }
+    }
+    private var previousStands: [Standup] {
+        space.stands
+            .filter { $0.day < thisMonday && $0.published }
+            .sorted { $0.day > $1.day }
+    }
 
     var body: some View {
         @Bindable var settings = settings
         List(selection: $settings.workspaceSelected) {
             Section("Active Workstreams") {
                 ForEach(
-                    workspace.streams.active.sorted { $0.updated > $1.updated }
+                    space.streams.active.sorted { $0.updated > $1.updated }
                 ) { ws in
-                    Text(ws.description)
-                        .tag(WorkspaceSelected.workstream(ws.id))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(ws.title)
+                        if let key = ws.issueKey {
+                            Text(key)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tag(WorkspaceSelected.workstream(ws.id))
                 }
                 Label("New Workstream", systemImage: "water.waves")
                     .tag(WorkspaceSelected.newWorkstream)
             }
             .listSectionSeparator(.visible)
-            Section("Standups") {
-//                Button("Temp show doc") {
-//                    NSApp.appDelegate?.showTempStandDocWindow()
-//                }
-                if !workspace.isEditingStandup {
+            Section("Current Standup") {
+                if let st = space.editingStandup {
+                    Label(st.title, systemImage: "pencil")
+                    .tag(WorkspaceSelected.standup(st.id))
+                } else {
                     Label("New Standup", systemImage: "square.and.pencil")
                         .tag(WorkspaceSelected.newStandup)
-                        .disabled(true)
                 }
-                ForEach(
-                    workspace.stands.reversed()
-                ) { st in
-                    Label(
-                        st.title,
-                        systemImage: st.editing ? "pencil" : "lock"
-                    )
-                    .tag(WorkspaceSelected.standup(st.id))
+            }
+            Section("This Week") {
+                if currentWeekStands.isEmpty {
+                    Text("None")
+                } else {
+                    ForEach(currentWeekStands) { st in
+                        Label(st.title, systemImage: st.editing ? "pencil" : "checkmark.circle")
+                            .tag(WorkspaceSelected.standup(st.id))
+                    }
+                }
+            }
+            Section("Previous Standups", isExpanded: $expandPrevious) {
+                if previousStands.isEmpty {
+                    Text("None")
+                } else {
+                    ForEach(previousStands) { st in
+                        Label(st.title, systemImage: st.editing ? "pencil" : "checkmark.circle")
+                            .tag(WorkspaceSelected.standup(st.id))
+                    }
                 }
             }
             .listSectionSeparator(.visible)
             Section("Paused Workstreams", isExpanded: $expandPaused) {
-                ForEach(workspace.streams.paused) { model in
-                    Text(model.title)
-                        .tag(WorkspaceSelected.workstream(model.id))
+                if space.streams.paused.isEmpty {
+                    Text("None")
+                } else {
+                    ForEach(space.streams.paused) { model in
+                        Text(model.title)
+                            .tag(WorkspaceSelected.workstream(model.id))
+                    }
                 }
             }
             Section("Completed Workstreams", isExpanded: $expandComplete) {
-                ForEach(workspace.streams.completed) { model in
-                    Text(model.title)
-                        .tag(WorkspaceSelected.workstream(model.id))
+                if space.streams.completed.isEmpty {
+                    Text("None")
+                } else {
+                    ForEach(space.streams.completed) { model in
+                        Text(model.title)
+                            .tag(WorkspaceSelected.workstream(model.id))
+                    }
                 }
             }
         }
@@ -64,27 +103,34 @@ struct WorkspaceNavList: View {
 }
 
 #Preview {
-    @Previewable @State var workspace = Workspace()
-    WorkspaceNavList(workspace: $workspace)
+    @Previewable @State var space = Workspace()
+    WorkspaceNavList(space: $space)
         .listStyle(.sidebar)
         .environment(UserSettings())
+        .frame(width: 400, height: 700)
         .onAppear {
-            var ws1 = Workstream(UUID())
-//            ws1.title = "Some work to be done"
-//            ws1.issueKey = "FOOD-1234"
-//            workspace.streams.append(ws1)
-//            var ws2 = Workstream(UUID())
-//            ws2.title = "Some work to be done"
-//            ws2.issueKey = "PASTA-1234"
-//            workspace.streams.append(ws2)
-//            
-//            var s1 = Standup(workspace.id)
-//            s1.title = "1/1/2026 Standup"
-//            s1.publish()
-//            workspace.stands.append(s1)
-//            
-//            var s2 = Standup(workspace.id)
-//            s2.title = "1/2/2026 Standup"
-//            workspace.stands.append(s2)
+            let ws1Id = space.createWorkstream("Workstream 1", "FOOD-1234")
+            let ws2Id = space.createWorkstream("Workstream 2", "FOOD-5789")
+            let thisMonday = IsoDay.today.thisWeekMonday
+            let lastWeekMonday = thisMonday.subDays(7)
+            let olderMonday = thisMonday.subDays(14)
+            let s1Id = space.createStandup("Standup 1", start: thisMonday.start)
+            let s2Id = space.createStandup("Standup 2", start: thisMonday.addDays(1).start)
+            let s3Id = space.createStandup("Standup 3", start: IsoDay.today.start)
+            space.publishStandup(s1Id)
+            space.publishStandup(s2Id)
+            space.publishStandup(s3Id)
+            let s4Id = space.createStandup("Standup 4", start: lastWeekMonday.start)
+            let s5Id = space.createStandup("Standup 5", start: lastWeekMonday.addDays(3).start)
+            space.publishStandup(s4Id)
+            space.publishStandup(s5Id)
+            let s6Id = space.createStandup("Standup 6", start: olderMonday.start)
+            let s7Id = space.createStandup("Standup 7", start: olderMonday.addDays(1).start)
+            let s8Id = space.createStandup("Standup 8", start: thisMonday.addDays(2).start)
+            space.publishStandup(s6Id)
+            space.publishStandup(s7Id)
+            space.publishStandup(s8Id)
+            let s9Id = space.createStandup("Standup 9", start: lastWeekMonday.addDays(5).start)
+            space.publishStandup(s9Id)
         }
 }

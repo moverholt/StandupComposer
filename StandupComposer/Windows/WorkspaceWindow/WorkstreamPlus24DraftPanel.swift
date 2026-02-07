@@ -16,17 +16,11 @@ struct WorkstreamPlus24DraftPanel: View {
     }
 
     private var updatesInRange: [Workstream.Entry] {
-        guard let stream else { return [] }
-        return stream.entries.filter {
-            $0.created >= stand.rangeStart &&
-            $0.created <= (stand.rangeEnd ?? Date.distantFuture)
-        }
+        stream?.entries(for: stand) ?? []
     }
 
     private var draftPrompt: String? {
-        guard let stream else {
-            return nil
-        }
+        guard let stream else { return nil }
         return plus24DraftPrompt(
             stream,
             updatesInRange,
@@ -56,15 +50,7 @@ struct WorkstreamPlus24DraftPanel: View {
             aiActive = false
             if let final {
                 var sp = space
-                guard var st = sp.getStand(stand.id),
-                      let idx = st.entries.firstIndex(where: { $0.id == entry.id })
-                else {
-                    aiPartial = nil
-                    return
-                }
-                st.entries[idx].plus24Draft = final
-                st.entries[idx].plus24DraftGeneratedAt = Date()
-                sp.updateStandup(st)
+                sp.setPlus24Draft(standId: stand.id, entryId: entry.id, draft: final)
                 space = sp
             }
             aiPartial = nil

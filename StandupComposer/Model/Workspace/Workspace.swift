@@ -49,39 +49,11 @@ struct Workspace: Codable, Identifiable  {
         }
     }
     
-//    mutating func addWorkstreamUpdate(
-//        id: Workstream.ID,
-//        body: String,
-//        standId: Standup.ID?
-//    ) {
-////        appendUpdate(body, streamId: id)
-////        if let stream = getStream(id),
-////           let standId = standId,
-////           let standIndex = stands.findIndex(id: standId) {
-////            stands[standIndex].streamUpdates[id] = .init(stream)
-////        }
-//    }
-    
     mutating func deleteWorkstreamEntry(_ entry: Workstream.Entry) {
         if let index = streams.findIndex(id: entry.workstreamId) {
             streams[index].deleteEntry(entry.id)
         }
     }
-    
-//    mutating func addWorkstreamPlan(
-//        id: Workstream.ID,
-//        body: String,
-//        standId: Standup.ID?
-//    ) {
-//        let plnId = appendPlan(body, streamId: id)
-//        if let standId = standId,
-//           let standIndex = stands.findIndex(id: standId) {
-//            if stands[standIndex].incompletePlans[id] == nil {
-//                stands[standIndex].incompletePlans[id] = Set()
-//            }
-//            stands[standIndex].incompletePlans[id]?.insert(plnId)
-//        }
-//    }
     
     mutating func createWorkstream(_ title: String) -> Workstream.ID {
         return createWorkstream(title, nil)
@@ -107,12 +79,16 @@ struct Workspace: Codable, Identifiable  {
         }
     }
     
-    mutating func createStandup(_ title: String) -> Standup.ID {
+    mutating func createStandup(
+        _ title: String,
+        start: Date = Date.distantPast
+    ) -> Standup.ID {
         let previousStand = stands.published.last
+        let startDate = start != Date.distantPast ? start : (previousStand?.rangeEnd ?? Date.distantPast)
         var stand = Standup(
             title,
             self.id,
-            start: previousStand?.rangeEnd ?? Date.distantPast,
+            start: startDate,
             previousStandId: previousStand?.id
         )
         
@@ -122,44 +98,44 @@ struct Workspace: Codable, Identifiable  {
         
         stands.append(stand)
         return stand.id
-//
-//        for i in 0..<streams.count {
-//            let stream = streams[i]
-//            if !stream.active { continue }
-////            let upd = Standup.WorkstreamGenUpdate(stream)
-////            stand.prevDay.append(upd)
-////            let pln = Standup.WorkstreamGenUpdate(stream)
-////            stand.today.append(pln)
-//            
-//            stand.addWorkstreamToUpdates(stream)
-//            stand.addWorkstreamToPlans(stream)
-//            
-////            for upd in stream.updates.noStandup {
-////                if let i2 = stream.updates.findIndex(id: upd.id) {
-////                    streams[i].updates[i2].standId = stand.id
-////                }
-////            }
-////            
-////            for pln in stream.plans.complete.noCompletedStandId {
-////                if let i2 = stream.plans.findIndex(id: pln.id) {
-////                    streams[i].plans[i2].completedStandId = stand.id
-////                }
-////            }
-////            
-////            for pln in stream.plans.incomplete {
-////                if let i2 = stream.plans.findIndex(id: pln.id) {
-////                    streams[i].plans[i2].standIds.append(stand.id)
-////                }
-////            }
-//        }
-//        stands.append(stand)
-//        return stand.id
     }
     
     mutating func updateStandup(_ stand: Standup) {
         if let index = stands.findIndex(id: stand.id) {
             stands[index] = stand
         }
+    }
+
+    mutating func setMinus24Draft(standId: Standup.ID, entryId: Standup.WorkstreamEntry.ID, draft: String) {
+        guard var st = getStand(standId),
+              let idx = st.entries.firstIndex(where: { $0.id == entryId })
+        else { return }
+        st.entries[idx].minus24Draft = draft
+        st.entries[idx].minus24DraftGeneratedAt = Date()
+        updateStandup(st)
+    }
+
+    mutating func setPlus24Draft(standId: Standup.ID, entryId: Standup.WorkstreamEntry.ID, draft: String) {
+        guard var st = getStand(standId),
+              let idx = st.entries.firstIndex(where: { $0.id == entryId })
+        else { return }
+        st.entries[idx].plus24Draft = draft
+        st.entries[idx].plus24DraftGeneratedAt = Date()
+        updateStandup(st)
+    }
+    
+    mutating func setFormatted(standId: Standup.ID, formatted: String) {
+        guard var st = getStand(standId) else { return }
+        st.formattedSlack = formatted
+        updateStandup(st)
+    }
+
+    mutating func setEntryReviewed(standId: Standup.ID, entryId: Standup.WorkstreamEntry.ID, reviewed: Bool) {
+        guard var st = getStand(standId),
+              let idx = st.entries.firstIndex(where: { $0.id == entryId })
+        else { return }
+        st.entries[idx].reviewedAt = reviewed ? Date() : nil
+        updateStandup(st)
     }
 
     mutating func deleteStand(_ id: Standup.ID) {
@@ -172,12 +148,6 @@ struct Workspace: Codable, Identifiable  {
         streams.remove(at: index)
     }
     
-//    mutating func setStandTitle(_ id: Standup.ID, _ title: String) {
-//        guard let index = stands.findIndex(id: id) else { return }
-//        stands[index].title = title
-//        stands[index].updated = Date()
-//    }
-    
     func getStand(_ id: Standup.ID?) -> Standup? {
         guard let id = id else { return nil }
         return stands.find(id: id)
@@ -188,133 +158,6 @@ struct Workspace: Codable, Identifiable  {
         return streams.first(where: { $0.id == id })
     }
     
-//    func getStandStreamUpdates(
-//        standId: Standup.ID
-//    ) -> [Workstream.ID: [Workstream.Update]] {
-//        guard let stand = getStand(standId) else { return [:] }
-//        let prev = getStand(stand.previousStandId)
-//        
-//        var resp: [Workstream.ID: [Workstream.Update]] = [:]
-//        for (_, marker) in stand.streamUpdates {
-//            let firstUpdateNumber = prev?.streamUpdates[marker.ws.id]?.lastUpdateNumber ?? 0
-//            if let stream = streams.find(id: marker.ws.id) {
-//                resp[stream.id] = stream.updates.filter({
-//                    $0.number > firstUpdateNumber &&
-//                    $0.number <= marker.lastUpdateNumber
-//                })
-//            }
-//        }
-//        
-//        return resp
-//    }
-    
-//    func getStandCompletedPlans(
-//        standId: Standup.ID
-//    ) -> [Workstream.ID: [Workstream.Plan]] {
-//        guard let stand = stands.find(id: standId) else { return [:] }
-//        var resp: [Workstream.ID: [Workstream.Plan]] = [:]
-//        
-//        if let prev = getStand(stand.previousStandId) {
-//            for (streamId, planIds) in prev.incompletePlans {
-//                if let stream = streams.find(id: streamId) {
-//                    for planId in planIds {
-//                        if let plan = stream.plans.find(id: planId), plan.completed {
-//                            resp[streamId] = (resp[streamId] ?? []) + [plan]
-//                        }
-//                    }
-//                }
-//            }
-////            for (streamId, planIds) in stand.incompletePlans {
-////                if let stream = streams.find(id: streamId) {
-////                    for planId in planIds {
-////                        if let plan = stream.plans.find(id: planId), plan.completed {
-////                            if !(resp[streamId] ?? []).contains(where: { $0.id == plan.id }) {
-////                                resp[streamId] = (resp[streamId] ?? []) + [plan]
-////                            }
-////                        }
-////                    }
-////                }
-////            }
-//        } else {
-//            for (_, marker) in stand.streamUpdates {
-//                if let stream = streams.find(id: marker.ws.id) {
-//                    resp[stream.id] = stream.plans.filter({ $0.completed })
-//                }
-//            }
-//        }
-//        
-//        return resp
-//    }
-    
-//    func getStandIncompletePlans(
-//        standId: Standup.ID
-//    ) -> [Workstream.ID: [Workstream.Plan]] {
-//        guard let stand = stands.find(id: standId) else { return [:] }
-//        
-//        var resp: [Workstream.ID: [Workstream.Plan]] = [:]
-//        for (_, marker) in stand.streamUpdates {
-//            if let stream = streams.find(id: marker.ws.id) {
-//                resp[stream.id] = stream.plans.filter({ !$0.completed })
-//            }
-//        }
-//        
-//        return resp
-//    }
-
-//    mutating func appendUpdate(_ body: String, streamId: Workstream.ID) {
-//        guard let index = streams.findIndex(id: streamId) else { return }
-//        streams[index].appendUpdate(.today, body: body)
-//        streams[index].touch()
-//    }
-    
-//    mutating func appendPlan(
-//        _ body: String,
-//        streamId: Workstream.ID
-//    ) -> Workstream.Plan.ID {
-//        let index = streams.findIndex(id: streamId)!
-//        let id = streams[index].appendPlan(body)
-//        streams[index].touch()
-//        return id
-//    }
-    
-//    mutating func completePlan(
-//        _ planId: Workstream.Plan.ID,
-//        streamId: Workstream.ID
-//    ) {
-//        let streamIndex = streams.findIndex(id: streamId)!
-//        let planIndex = streams[streamIndex].plans.findIndex(id: planId)!
-//        streams[streamIndex].plans[planIndex].dayComplete = .today
-//        streams[streamIndex].touch()
-//    }
-    
-//    mutating func updatePlanComplete(
-//        _ value: Bool,
-//        planId: Workstream.Plan.ID,
-//        streamId: Workstream.ID,
-//        standId: Standup.ID?
-//    ) {
-//        
-//        let streamIndex = streams.findIndex(id: streamId)!
-//        let planIndex = streams[streamIndex].plans.findIndex(id: planId)!
-//        if value {
-//            streams[streamIndex].plans[planIndex].dayComplete = .today
-//        } else {
-//            streams[streamIndex].plans[planIndex].dayComplete = nil
-//        }
-//        streams[streamIndex].touch()
-//        
-//        if let id = standId {
-//            if let i = stands.findIndex(id: id) {
-//                if value {
-//                    stands[i].incompletePlans[streamId]?.remove(planId)
-//                } else {
-//                    if stands[i].incompletePlans[streamId] == nil {
-//                        stands[i].incompletePlans[streamId] = Set()
-//                    }
-//                    stands[i].incompletePlans[streamId]?.insert(planId)
-//                }
-//            }
-//        }
 //    }
 }
 

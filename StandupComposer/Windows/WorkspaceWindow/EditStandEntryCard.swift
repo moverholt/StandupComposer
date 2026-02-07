@@ -19,12 +19,29 @@ struct EditStandEntryCard: View {
         return URL(string: "\(path)/browse/\(issueKey)")
     }
 
+    private var viewedBinding: Binding<Bool> {
+        Binding(
+            get: { entry.reviewedAt != nil },
+            set: { newValue in
+                var s = space
+                s.setEntryReviewed(
+                    standId: stand.id,
+                    entryId: entry.id,
+                    reviewed: newValue
+                )
+                space = s
+            }
+        )
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
                 Text(stream.title)
                     .font(.largeTitle)
                     .fontWeight(.semibold)
+                Toggle("Viewed", isOn: viewedBinding)
+                    .toggleStyle(.checkbox)
                 Spacer()
                 if let key = stream.issueKey {
                     Text(key)
@@ -70,37 +87,39 @@ struct EditStandEntryCard: View {
                 .fixedSize()
             }
             .padding(.bottom, 4)
-            Section {
-                WorkstreamEntryUpdatesPanel(
-                    space: $space,
-                    stand: stand,
-                    entry: entry
-                )
-                .padding(.vertical, 6)
-            }
-            Section {
-                WorkstreamEntryMinus24View(
-                    space: $space,
-                    stand: stand,
-                    entry: entry
-                )
-                .padding(.vertical, 6)
-            } header: {
-                Text("-24")
-                    .font(.headline)
-                    .fontDesign(.monospaced)
-            }
-            Section {
-                WorkstreamEntryPlus24View(
-                    space: $space,
-                    stand: stand,
-                    entry: entry
-                )
-                .padding(.vertical, 6)
-            } header: {
-                Text("+24")
-                    .font(.headline)
-                    .fontDesign(.monospaced)
+            if entry.reviewedAt == nil {
+                Section {
+                    WorkstreamEntryUpdatesPanel(
+                        space: $space,
+                        stand: stand,
+                        entry: entry
+                    )
+                    .padding(.vertical, 6)
+                }
+                Section {
+                    WorkstreamEntryMinus24View(
+                        space: $space,
+                        stand: stand,
+                        entry: entry
+                    )
+                    .padding(.vertical, 6)
+                } header: {
+                    Text("-24")
+                        .font(.headline)
+                        .fontDesign(.monospaced)
+                }
+                Section {
+                    WorkstreamEntryPlus24View(
+                        space: $space,
+                        stand: stand,
+                        entry: entry
+                    )
+                    .padding(.vertical, 6)
+                } header: {
+                    Text("+24")
+                        .font(.headline)
+                        .fontDesign(.monospaced)
+                }
             }
         }
         .padding()

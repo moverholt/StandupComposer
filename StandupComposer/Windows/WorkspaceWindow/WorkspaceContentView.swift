@@ -65,7 +65,31 @@ struct WorkspaceContentView: View {
     
     private func submitOverlay() {
         let trimmed = ovm.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesPlus24EntryId {
+        if let standId = ovm.finalStandId, let entryId = ovm.finalEntryId {
+            var sp = space
+            guard var st = sp.getStand(standId),
+                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
+            else {
+                ovm.close()
+                return
+            }
+            st.entries[idx].minus24Final = trimmed.isEmpty ? nil : trimmed
+            st.entries[idx].minus24EditedAt = Date()
+            sp.updateStandup(st)
+            space = sp
+        } else if let standId = ovm.finalPlus24StandId, let entryId = ovm.finalPlus24EntryId {
+            var sp = space
+            guard var st = sp.getStand(standId),
+                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
+            else {
+                ovm.close()
+                return
+            }
+            st.entries[idx].plus24Final = trimmed.isEmpty ? nil : trimmed
+            st.entries[idx].plus24EditedAt = Date()
+            sp.updateStandup(st)
+            space = sp
+        } else if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesPlus24EntryId {
             var sp = space
             guard var st = sp.getStand(standId),
                   let idx = st.entries.firstIndex(where: { $0.id == entryId })
@@ -98,7 +122,7 @@ struct WorkspaceContentView: View {
         NavigationSplitView(
             columnVisibility: $settings.workspaceColumnVisibility
         ) {
-            WorkspaceNavList(workspace: $space)
+            WorkspaceNavList(space: $space)
                 .listStyle(.sidebar)
                 .navigationSplitViewColumnWidth(
                     min: 200,

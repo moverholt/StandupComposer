@@ -118,12 +118,12 @@ struct WorkspaceStandupDetailView: View {
                 Spacer()
                 if stand.editing {
                     HStack {
-                        Button(action: runAll) {
-                            Label(
-                                "Generate all summaries",
-                                systemImage: "sparkles.rectangle.stack"
-                            )
-                        }
+//                        Button(action: runAll) {
+//                            Label(
+//                                "Generate all summaries",
+//                                systemImage: "sparkles.rectangle.stack"
+//                            )
+//                        }
                         Button(action: publish) {
                             Label(
                                 "Publish standup",
@@ -138,14 +138,26 @@ struct WorkspaceStandupDetailView: View {
             if stand.editing {
                 TabView {
                     Tab("Edit", systemImage: "pencil") {
-                        EditStandScrollView(space: $space, stand: stand)
+                        EditStandScrollView(
+                            space: $space,
+                            stand: stand
+                        )
                     }
-                    Tab("Formatted", systemImage: "paragraphsign") {
-                        StandFormattedView(stand: stand)
+                    Tab(
+                        "Formatted",
+                        systemImage: "paragraphsign"
+                    ) {
+                        StandFormattedView(
+                            stand: stand,
+                            space: $space
+                        )
                     }
                 }
             } else {
-                StandFormattedView(stand: stand)
+                StandFormattedView(
+                    stand: stand,
+                    space: $space
+                )
             }
         }
     }
@@ -160,6 +172,7 @@ struct WorkspaceStandupDetailView: View {
     }
     .frame(width: 700, height: 400)
     .environment(UserSettings())
+    .environment(WorkspaceOverlayViewModel())
     .onAppear {
         let _ = space.createWorkstream("Workstream 1", "PREV-1")
         let _ = space.createWorkstream("Workstream 2", "PREV-2")

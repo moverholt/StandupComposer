@@ -30,7 +30,7 @@ struct WorkspaceNewWorkstreamView: View {
         let t = title.trimmingCharacters(in: .whitespaces)
         if t.isEmpty { return }
         let key = issueKey.trimmingCharacters(in: .whitespaces)
-        var id = space.createWorkstream(title, issueKey)
+        let id = space.createWorkstream(title, key)
         settings.workspaceSelected = .workstream(id)
     }
 

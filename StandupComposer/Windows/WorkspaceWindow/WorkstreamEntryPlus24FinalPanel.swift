@@ -1,24 +1,10 @@
 import SwiftUI
 
 struct WorkstreamEntryPlus24FinalPanel: View {
+    @Environment(WorkspaceOverlayViewModel.self) private var ovm
     @Binding var space: Workspace
     let stand: Standup
     let entry: Standup.WorkstreamEntry
-
-    private var finalBinding: Binding<String> {
-        Binding(
-            get: { entry.plus24Final ?? "" },
-            set: { newValue in
-                var sp = space
-                guard var st = sp.getStand(stand.id),
-                      let idx = st.entries.firstIndex(where: { $0.id == entry.id })
-                else { return }
-                st.entries[idx].plus24Final = newValue.isEmpty ? nil : newValue
-                sp.updateStandup(st)
-                space = sp
-            }
-        )
-    }
 
     private func useDraft() {
         guard let draft = entry.plus24Draft, !draft.isEmpty else { return }
@@ -38,9 +24,21 @@ struct WorkstreamEntryPlus24FinalPanel: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
-            TextField("Final text …", text: finalBinding, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .lineLimit(4, reservesSpace: true)
+            if let finalText = entry.plus24Final, !finalText.isEmpty {
+                Text(finalText)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Button {
+                ovm.showEditPlus24Final(standId: stand.id, entryId: entry.id, initialText: entry.plus24Final ?? "")
+            } label: {
+                Label(entry.plus24Final?.isEmpty == false ? "Edit final" : "Add final", systemImage: "pencil.line")
+            }
+            .buttonStyle(.plain)
+            .controlSize(.small)
+            .font(.subheadline)
+            .foregroundStyle(ovm.showOverlay && ovm.finalPlus24EntryId == entry.id ? Color.accentColor : .secondary)
 
             Button {
                 useDraft()
@@ -66,6 +64,7 @@ struct WorkstreamEntryPlus24FinalPanel: View {
     }
     .frame(width: 220, height: 200)
     .environment(UserSettings())
+    .environment(WorkspaceOverlayViewModel())
     .onAppear {
         let streamId = space.createWorkstream("Preview Workstream", "PREV-1")
         space.addWorkstreamEntry(streamId, "First update in range")

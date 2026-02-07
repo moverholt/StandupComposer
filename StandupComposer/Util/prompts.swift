@@ -83,13 +83,15 @@ func minus24DraftPrompt(
                "Input Sources: Use the workstream updates and deraft notes provided.",
                "Output Goal: Create a concise summary that communicates what happened in this workstream during the previous 24 hours.",
            ]
-       ))
+       )
+   )
 
    blocks.append(
        (
            "Input Data: Workstream Updates",
            entries.isEmpty ? ["No updates found."] : entries.map({ $0.body })
-       ))
+       )
+   )
 
    if let notes, !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
        let notesTrimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -100,7 +102,8 @@ func minus24DraftPrompt(
                    "The following are user-entered draft notes for context and to help write the draft update.",
                    notesTrimmed
                ]
-           ))
+           )
+       )
    }
 
    return combine(blocks)
@@ -148,48 +151,6 @@ func plus24DraftPrompt(
 
    return combine(blocks)
 }
-
-//#Playground {
-//    let ws = Workstream()
-//    let _ = wsUpdatePrompt(ws, [], [])
-//}
-
-//func wsPlanPrompt(
-//    _ ws: Workstream,
-//    _ plans: [Workstream.Plan]
-//) -> String {
-//    var blocks: [Block] = []
-//    blocks.append(appBlock)
-//    blocks.append(domainBlock)
-//    blocks.append(styleGuideBlock)
-//    blocks.append(editingStyleBlock)
-//
-//    blocks.append(
-//        (
-//            "Writing Agent Assignment",
-//            [
-//                "Role: You are the StandupComposer Writing Agent.",
-//                "Task: Generate a summary update for the +24 section of a standup.",
-//                "Target Workstream: \(ws.title)",
-//                "Input Sources: Use the incomplete workstream plans provided below.",
-//                "Output Goal: Create a concise summary that communicates what is planned for this workstream in the next 24 hours.",
-//            ]
-//        ))
-//
-//    blocks.append(
-//        (
-//            "Input Data: Incomplete Workstream Plans",
-//            plans.incomplete.isEmpty
-//                ? ["No incomplete plans available."] : plans.incomplete.map({ $0.body })
-//        ))
-//
-//    return combine(blocks)
-//}
-//
-//#Playground {
-//    let ws = Workstream()
-//    let _ = wsPlanPrompt(ws, [])
-//}
 
 private let slackFormatting = """
     You are generating text that will be posted to Slack via the Slack API.
@@ -261,88 +222,124 @@ private let slackFormatting = """
     - Assume the message will be pasted directly into Slack.
     """
 
-//func slackFormatterPrompt(_ stand: Standup, jiraBaseUrl: String? = nil) -> String {
-//    var blocks: [Block] = []
-//    blocks.append(appBlock)
-//    blocks.append(domainBlock)
-//    blocks.append(("Slack mrkdwn format rules", [slackFormatting]))
-//
-//    let base = (jiraBaseUrl ?? "").trimmingCharacters(in: .whitespaces)
-//    let jiraBrowse = base.isEmpty ? "" : (base.hasSuffix("/") ? String(base.dropLast()) : base)
-//
-//    var pubContent = [
-//        "Role: You are the StandupComposer Publishing Agent.",
-//        "Task: Assemble the -24 and +24 items below into one plain-text string. The output will be copied and pasted into Slack. Use only Slack mrkdwn (https://docs.slack.dev/messaging/formatting-message-text/): *bold*, _italic_, `code`, ~strike~; links as <url> or <url|link text>; newlines for line breaks. Do not use Unicode symbols or decorative rules.",
-//        "Output: Exactly 2 sections: *-24* (past 24 hours) then *+24* (next 24 hours). Each workstream has 1 row in -24 and 1 row in +24. Every row must: (1) identify the workstream—bold the workstream title using *Workstream Name* format (e.g. *Add new pasta types to the pasta view* or *Import next month's menu*; use full title or clear abbreviated title); (2) state the update (in -24) or the plan (in +24). Omit a workstream row if its update or plan body is empty or \"None\". Omit a section entirely if it has no rows.",
-//        "Style: Bold the workstream title in each row using *Workstream Title* format, followed by the update or plan content.",
-//    ]
-//    if !jiraBrowse.isEmpty {
-//        pubContent.append(
-//            "When a workstream has a Jira URL, include a link as <url|ISSUE KEY> (e.g. <\(jiraBrowse)/browse/KEY|KEY>) so the issue key is the link text. The Jira link helps the reader navigate to the story."
-//        )
-//    }
-//
-//    blocks.append(("Publishing Agent Assignment", pubContent))
-//
-//    blocks.append(
-//        (
-//            "-24 (Individual workstream sections to assemble into the formatted standup)",
-//            stand.prevDay.flatMap({ upd in
-//                var arr: [String] = [
-//                    "**** Start Workstream: \(upd.ws.title) ****"
-//                ]
-//                arr.append("Issue key: \(upd.ws.issueKey ?? "None")")
-//                if !jiraBrowse.isEmpty, let key = upd.ws.issueKey, !key.isEmpty {
-//                    arr.append("Jira: \(jiraBrowse)/browse/\(key)")
-//                }
-//                arr.append("Update: \(upd.ai.final ?? "None")")
-//                arr.append("**** End workstream ****")
-//                return arr
-//            })
-//        ))
-//
-//    blocks.append(
-//        (
-//            "+24 (Individual workstream sections to assemble into the formatted standup)",
-//            stand.today.flatMap({ pln in
-//                var arr: [String] = [
-//                    "**** Start Workstream: \(pln.ws.title) ****"
-//                ]
-//                arr.append("Issue key: \(pln.ws.issueKey ?? "None")")
-//                if !jiraBrowse.isEmpty, let key = pln.ws.issueKey, !key.isEmpty {
-//                    arr.append("Jira: \(jiraBrowse)/browse/\(key)")
-//                }
-//                arr.append("Plan: \(pln.ai.final ?? "None")")
-//                arr.append("**** ****")
-//                return arr
-//            })
-//        ))
-//
-//    return combine(blocks)
-//}
+func slackFormatterPrompt(
+    _ standId: Standup.ID,
+    space: Workspace,
+    jiraBaseUrl: String? = nil
+) -> String {
+    let stand = space.getStand(standId)!
+    var blocks: [Block] = []
+    blocks.append(appBlock)
+    blocks.append(domainBlock)
+    blocks.append(("Slack mrkdwn format rules", [slackFormatting]))
 
-//#Playground {
-//    var s = Standup(.today, title: "Mon Jan 19")
-//
-//    var ws1 = Workstream()
-//    ws1.title = "Add new pasta types to the pasta view"
-//    ws1.issueKey = "FOOD-10"
-//    var up1 = Standup.WorkstreamGenUpdate(ws1)
-//    up1.ai.final = "Met with product manager about new pasta types."
-//    s.prevDay.append(up1)
-//    var pl1 = Standup.WorkstreamGenUpdate(ws1)
-//    pl1.ai.final = "Update API to support to pasta attributes."
-//    s.today.append(pl1)
-//
-//    var ws2 = Workstream()
-//    ws2.title = "Import next month's menu into the application"
-//    ws2.issueKey = "FOOD-20"
-//    var up2 = Standup.WorkstreamGenUpdate(ws2)
-//    up2.ai.final = "Tracked down API documents and started to build backend updates"
-//    s.prevDay.append(up2)
-//    var pl2 = Standup.WorkstreamGenUpdate(ws2)
-//    pl2.ai.final = "Meet with chefs to gather menu items."
-//    s.today.append(pl2)
-//
-//    let p = slackFormatterPrompt(s)
-//}
+    let base = (jiraBaseUrl ?? "").trimmingCharacters(in: .whitespaces)
+    let jiraBrowse = base.isEmpty ? "" : (base.hasSuffix("/") ? String(base.dropLast()) : base)
+
+    var pubContent = [
+        "Role: You are the StandupComposer Publishing Agent.",
+        "Task: Assemble the -24 and +24 items below into one plain-text string. The output will be copied and pasted into Slack. Use only Slack mrkdwn (https://docs.slack.dev/messaging/formatting-message-text/): *bold*, _italic_, `code`, ~strike~; links as <url> or <url|link text>; newlines for line breaks. Do not use Unicode symbols or decorative rules.",
+        "Output: Exactly 2 sections: *-24* (past 24 hours) then *+24* (next 24 hours). Each workstream has 1 row in -24 and 1 row in +24. Every row must: (1) identify the workstream—bold the workstream title using *Workstream Name* format (e.g. *Add new pasta types to the pasta view* or *Import next month's menu*; use full title or clear abbreviated title); (2) state the update (in -24) or the plan (in +24). Omit a workstream row if its update or plan body is empty or \"None\". Omit a section entirely if it has no rows.",
+        "Style: Bold the workstream title in each row using *Workstream Title* format, followed by the update or plan content.",
+    ]
+    if !jiraBrowse.isEmpty {
+        pubContent.append(
+            "When a workstream has a Jira URL, include a link as <url|ISSUE KEY> (e.g. <\(jiraBrowse)/browse/KEY|KEY>) so the issue key is the link text. The Jira link helps the reader navigate to the story."
+        )
+    }
+
+    blocks.append(("Publishing Agent Assignment", pubContent))
+    
+    let minus24: [String] = stand.entries.flatMap({ ent -> [String] in
+        guard let ws = space.getStream(ent.workstreamId) else { return [] }
+        var arr: [String] = ["**** Start Workstream: \(ws.title) ****"]
+        arr.append("Issue key: \(ws.issueKey ?? "None")")
+        if !jiraBrowse.isEmpty, let key = ws.issueKey, !key.isEmpty {
+            arr.append("Jira: \(jiraBrowse)/browse/\(key)")
+        }
+        arr.append("Update: \(ent.minus24 ?? "None")")
+        arr.append("**** End workstream ****")
+        return arr
+    })
+    
+    blocks.append((
+        "-24 (Individual workstream sections to assemble into the formatted standup)",
+        minus24
+    ))
+    
+    let plus24 = stand.entries.flatMap({ ent -> [String] in
+        guard let ws = space.getStream(ent.workstreamId) else { return [] }
+        var arr: [String] = [ "**** Start Workstream: \(ws.title) ****"]
+        arr.append("Issue key: \(ws.issueKey ?? "None")")
+        if !jiraBrowse.isEmpty, let key = ws.issueKey, !key.isEmpty {
+            arr.append("Jira: \(jiraBrowse)/browse/\(key)")
+        }
+        arr.append("Plan: \(ent.plus24 ?? "None")")
+        arr.append("**** ****")
+        return arr
+    })
+
+    blocks.append((
+        "+24 (Individual workstream sections to assemble into the formatted standup)",
+        plus24
+    ))
+
+    return combine(blocks)
+}
+
+#Playground {
+    var space = Workspace()
+    
+    let ws1Id = space.createWorkstream("Add new tacos to the taco menu.", "FOOD-1234")
+    
+    space.addWorkstreamEntry(
+        ws1Id,
+        """
+        Met with product team to discuss requirements.
+        Product wants the tacos to go at the top of the screen in the header.
+        I need to update API to handle new taco attributes and feed that
+        through graphql and into the view.
+        """
+    )
+
+    let standId = space.createStandup("Fri, Feb 6")
+    var stand = space.standupById[standId]!
+    let entry = stand.entries.first!
+    let stream = space.streams.first!
+    
+    let p1 = minus24DraftPrompt(
+        stream,
+        stream.entries(for: stand),
+        notes: entry.minus24DraftNotes
+    )
+    
+    let config = OpenAIConfig(UserSettings.shared)
+    Task {
+        let draft1 = try! await generateText(prompt: p1, config: config)
+        space.setMinus24Draft(
+            standId: stand.id,
+            entryId: entry.id,
+            draft: draft1
+        )
+        
+        let p2 = plus24DraftPrompt(
+            stream,
+            stream.entries(for: stand),
+            notes: entry.plus24DraftNotes
+        )
+        let draft2 = try! await generateText(prompt: p2, config: config)
+        space.setPlus24Draft(
+            standId: stand.id,
+            entryId: entry.id,
+            draft: draft2
+        )
+        
+        let p3 = slackFormatterPrompt(
+            stand.id,
+            space: space,
+            jiraBaseUrl: "http://test.jira"
+        )
+        
+        let formatted = try! await generateText(prompt: p3, config: config)
+    }
+}
