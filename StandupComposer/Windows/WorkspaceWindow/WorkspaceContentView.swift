@@ -33,9 +33,8 @@ enum WorkspaceSelected: Codable, Hashable {
 struct WorkspaceContentView: View {
     @Binding var space: Workspace
     @Environment(UserSettings.self) var settings
+    @Environment(WorkspaceOverlayViewModel.self) var ovm
 
-    @State private var ovm = WorkspaceOverlayViewModel()
-    
     private var selected: WorkspaceSelected {
         settings.workspaceSelected
     }
@@ -63,60 +62,6 @@ struct WorkspaceContentView: View {
         }
     }
     
-    private func submitOverlay() {
-        let trimmed = ovm.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let standId = ovm.finalStandId, let entryId = ovm.finalEntryId {
-            var sp = space
-            guard var st = sp.getStand(standId),
-                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
-            else {
-                ovm.close()
-                return
-            }
-            st.entries[idx].minus24Final = trimmed.isEmpty ? nil : trimmed
-            st.entries[idx].minus24EditedAt = Date()
-            sp.updateStandup(st)
-            space = sp
-        } else if let standId = ovm.finalPlus24StandId, let entryId = ovm.finalPlus24EntryId {
-            var sp = space
-            guard var st = sp.getStand(standId),
-                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
-            else {
-                ovm.close()
-                return
-            }
-            st.entries[idx].plus24Final = trimmed.isEmpty ? nil : trimmed
-            st.entries[idx].plus24EditedAt = Date()
-            sp.updateStandup(st)
-            space = sp
-        } else if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesPlus24EntryId {
-            var sp = space
-            guard var st = sp.getStand(standId),
-                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
-            else {
-                ovm.close()
-                return
-            }
-            st.entries[idx].plus24DraftNotes = trimmed.isEmpty ? nil : trimmed
-            sp.updateStandup(st)
-            space = sp
-        } else if let standId = ovm.draftNotesStandId, let entryId = ovm.draftNotesEntryId {
-            var sp = space
-            guard var st = sp.getStand(standId),
-                  let idx = st.entries.firstIndex(where: { $0.id == entryId })
-            else {
-                ovm.close()
-                return
-            }
-            st.entries[idx].minus24DraftNotes = trimmed.isEmpty ? nil : trimmed
-            sp.updateStandup(st)
-            space = sp
-        } else if !trimmed.isEmpty, let id = ovm.workstreamAddUpdateId {
-            space.addWorkstreamEntry(id, trimmed)
-        }
-        ovm.close()
-    }
-    
     var body: some View {
         @Bindable var settings = settings
         NavigationSplitView(
@@ -127,7 +72,7 @@ struct WorkspaceContentView: View {
                 .navigationSplitViewColumnWidth(
                     min: 200,
                     ideal: 280,
-                    max: 400
+                    max: 600
                 )
         } detail: {
             VStack(spacing: 0) {
@@ -135,11 +80,7 @@ struct WorkspaceContentView: View {
                     WorkspaceNewWorkstreamView(space: $space)
                 } else if selected == .newStandup {
                     WorkspaceNewStandupView(space: $space)
-                } else if let stream = selectedWorkstream {
-                    WorkspaceWorkstreamDetailView(
-                        space: $space,
-                        stream: stream
-                    )
+                } else if let stream = selectedWorkstream { WorkspaceWorkstreamDetailView(space: $space, stream: stream)
                 } else if let stand = selectedStandup {
                     WorkspaceStandupDetailView(space: $space, stand: stand)
                 } else {
@@ -147,14 +88,10 @@ struct WorkspaceContentView: View {
                 }
             }
             .padding()
-            .overlay(alignment: .bottomTrailing) {
+            .overlay(alignment: .bottom) {
                 Group {
                     if ovm.showOverlay {
-                        WorkspaceQuickInputOverlay(
-                            onSubmit: {
-                                submitOverlay()
-                            }
-                        )
+                        WorkspaceQuickInputOverlay(space: $space)
                     }
                 }
                 .animation(.default, value: ovm.showOverlay)
@@ -199,9 +136,12 @@ struct WorkspaceContentView: View {
     @Previewable @State var settings = UserSettings()
     WorkspaceContentView(space: $space)
         .environment(settings)
+        .environment(WorkspaceOverlayViewModel())
         .onAppear {
-            let wsId1 = space.createWorkstream("Workstream 1", "PREV-1")
-            let wsId2 = space.createWorkstream("Workstream 2", "PREV-2")
+            let ws1Id = space.createWorkstream("Workstream 1", "PREV-1")
+            settings.workspaceColumnVisibility = .detailOnly
+            let sId = space.createStandup("Preview Standup")
+            settings.workspaceSelected = .standup(sId)
         }
 }
 

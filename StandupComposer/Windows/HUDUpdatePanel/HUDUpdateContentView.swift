@@ -17,7 +17,7 @@ struct HUDUpdateContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
-                GrowingTextView2UI(
+                SubmittableTextView(
                     text: $text,
                     placeholder: "Type your update here",
                 ) {

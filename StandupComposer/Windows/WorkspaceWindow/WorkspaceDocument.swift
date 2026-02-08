@@ -19,8 +19,9 @@ final class WorkspaceDocumentModel {
 
 class WorkspaceDocument: NSDocument {
     var model: WorkspaceDocumentModel!
-    private var pendingAutosaveWorkItem: DispatchWorkItem?
-    private static let autosaveDebounceInterval: TimeInterval = 1.5
+//    private var pendingAutosaveWorkItem: DispatchWorkItem?
+//    private static let autosaveDebounceInterval: TimeInterval = 1.5
+    private var ovm = WorkspaceOverlayViewModel()
 
     override var windowNibName: String? {
         return "WorkspaceDocument"
@@ -55,6 +56,7 @@ class WorkspaceDocument: NSDocument {
                 )
             )
             .environment(UserSettings.shared)
+            .environment(ovm)
         )
 
         cont.contentViewController = hostingController

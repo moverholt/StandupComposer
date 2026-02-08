@@ -281,7 +281,7 @@ struct StandDocContentView: View {
                         }
                         Spacer()
                     }
-                    GrowingTextView2UI(
+                    SubmittableTextView(
                         text: $updateText,
                         placeholder: overlayMode == .update ? "Enter your update here..." : "Enter your plan here..."
                     ) {

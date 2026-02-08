@@ -18,13 +18,16 @@ struct WorkspaceNavList: View {
     private var currentWeekSunday: IsoDay { thisMonday.addDays(6) }
     private var currentWeekStands: [Standup] {
         space.stands
-            .filter { $0.day >= thisMonday && $0.day <= currentWeekSunday && $0.published && $0.id != space.editingStandup?.id }
-            .sorted { $0.day > $1.day }
+            .filter {
+                $0.day >= thisMonday &&
+                $0.day <= currentWeekSunday &&
+                $0.published && $0.id != space.editingStandup?.id
+            } .sorted { $0.created > $1.created }
     }
     private var previousStands: [Standup] {
         space.stands
             .filter { $0.day < thisMonday && $0.published }
-            .sorted { $0.day > $1.day }
+            .sorted { $0.created > $1.created }
     }
 
     var body: some View {
@@ -62,7 +65,7 @@ struct WorkspaceNavList: View {
                     Text("None")
                 } else {
                     ForEach(currentWeekStands) { st in
-                        Label(st.title, systemImage: st.editing ? "pencil" : "checkmark.circle")
+                        Text(st.title)
                             .tag(WorkspaceSelected.standup(st.id))
                     }
                 }
@@ -72,7 +75,7 @@ struct WorkspaceNavList: View {
                     Text("None")
                 } else {
                     ForEach(previousStands) { st in
-                        Label(st.title, systemImage: st.editing ? "pencil" : "checkmark.circle")
+                        Text(st.title)
                             .tag(WorkspaceSelected.standup(st.id))
                     }
                 }
