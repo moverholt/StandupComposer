@@ -85,8 +85,12 @@ struct WorkspaceWorkstreamDetailView: View {
             WorkspaceWorkstreamDetailView(space: $space, stream: stream)
         }
     }
+    .padding()
+    .frame(width: 400, height: 400)
     .environment(UserSettings.shared)
     .onAppear {
-        let _ = space.createWorkstream("Preview Stream", "PREV-1")
+        let wsid = space.createWorkstream("Preview Stream", "PREV-1")
+        space.addWorkstreamEntry(wsid, "Talked to someone")
+        space.addWorkstreamEntry(wsid, "Wrote some code")
     }
 }

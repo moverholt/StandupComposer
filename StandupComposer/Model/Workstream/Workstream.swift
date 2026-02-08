@@ -130,6 +130,8 @@ extension Workstream {
             self.workspaceId = workspaceId
             self.workstreamId = workstreamId
         }
+        
+        var day: IsoDay { created.isoDay }
     }
 }
 

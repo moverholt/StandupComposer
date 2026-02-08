@@ -48,6 +48,10 @@ struct WorkstreamEntry: View {
             }
         }
     }
+    .frame(width: 400, height: 100)
+    .padding()
     .onAppear {
+        let wsid = space.createWorkstream("Preview Workstream")
+        space.addWorkstreamEntry(wsid, "Workstream Entry")
     }
 }

@@ -69,7 +69,13 @@ struct IsoDay: Identifiable, CustomStringConvertible, Codable, Equatable, Compar
         formatter.dateFormat = "E, MMM d"
         return formatter.string(from: date)
     }
-    
+
+    var sectionHeaderTitle: String {
+        if self == IsoDay.today { return "Today" }
+        if self == IsoDay.yesterday { return "Yesterday" }
+        return formatted(style: .complete)
+    }
+
     var id: String {
         description
     }
