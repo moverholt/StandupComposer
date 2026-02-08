@@ -120,6 +120,42 @@ struct EditStandEntryCard: View {
                         .font(.headline)
                         .fontDesign(.monospaced)
                 }
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("-24")
+                            .font(.headline)
+                            .fontDesign(.monospaced)
+                            .foregroundStyle(.secondary)
+                        if let text = entry.minus24, !text.isEmpty {
+                            Text(text)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        } else {
+                            Text("No summary provided")
+                                .font(.subheadline)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    Divider()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("+24")
+                            .font(.headline)
+                            .fontDesign(.monospaced)
+                            .foregroundStyle(.secondary)
+                        if let text = entry.plus24, !text.isEmpty {
+                            Text(text)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        } else {
+                            Text("No plan provided")
+                                .font(.subheadline)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
             }
         }
         .padding()

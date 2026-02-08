@@ -8,9 +8,12 @@ public struct WorkstreamUpdatesScrollView: View {
         Dictionary(grouping: stream.entries, by: \.day)
     }
 
+    @MainActor
     private var sortedDays: [IsoDay] {
         entriesByDay.keys.sorted(by: <)
     }
+
+    @State private var position = ScrollPosition(edge: .bottom)
 
     public var body: some View {
         ScrollView {
@@ -31,6 +34,10 @@ public struct WorkstreamUpdatesScrollView: View {
                     }
                 }
             }
+        }
+        .scrollPosition($position)
+        .onChange(of: stream.entries.count) {
+            position.scrollTo(edge: .bottom)
         }
     }
 }

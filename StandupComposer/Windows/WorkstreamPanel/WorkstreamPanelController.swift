@@ -10,7 +10,7 @@ import SwiftUI
 
 class WorkstreamPanelController: NSWindowController {
     var space: Binding<Workspace>!
-    var stream: Workstream!
+    var stream: Binding<Workstream>!
 
     var panel: WorkstreamPanel! { self.window as? WorkstreamPanel }
 

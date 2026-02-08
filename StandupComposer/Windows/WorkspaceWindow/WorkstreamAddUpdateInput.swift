@@ -20,23 +20,31 @@ struct WorkstreamAddUpdateInput: View {
             Text("Add Update")
                 .font(.headline)
                 .foregroundStyle(.secondary)
-            HStack(alignment: .bottom, spacing: 8) {
-                TextField(
-                    "What did you do?",
-                    text: $text,
-                    axis: .vertical
-                )
-                .textFieldStyle(.roundedBorder)
-                .lineLimit(3, reservesSpace: true)
-                .onSubmit { submit() }
+            SubmittableTextView(
+                text: $text,
+                placeholder: "What did you do?",
+                maxLines: 3
+            ) {
+                submit()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(.quaternary.opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(.separator, lineWidth: 0.5)
+            )
+            HStack {
+                Spacer()
                 Button {
                     submit()
                 } label: {
                     Label("Add", systemImage: "paperplane.fill")
                         .labelStyle(.titleAndIcon)
                 }
-                .keyboardShortcut(.return, modifiers: [.command])
                 .buttonStyle(.borderedProminent)
+                .controlSize(.small)
                 .disabled(
                     text.trimmingCharacters(
                         in: .whitespacesAndNewlines

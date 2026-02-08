@@ -7,157 +7,69 @@
 
 import SwiftUI
 
-
 struct WorkspaceStandupDetailView: View {
     @Environment(UserSettings.self) var settings
     
     @Binding var space: Workspace
     let stand: Standup
 
-    private func runAll() {
-//        Task {
-//            for upd in stand.prevDay {
-//                if let ws = workspace.streams.find(id: upd.ws.id) {
-//                    if let index = stand.prevDay.findIndex(wsid: ws.id) {
-//                        Task {
-//                            await runUpdate(
-//                                index,
-//                                prompt: wsUpdatePrompt(
-//                                    ws,
-//                                    ws.plans.completedForStand(stand.id),
-//                                    ws.updates.forStand(stand.id)
-//                                ),
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        Task {
-//            for pln in stand.today {
-//                if let ws = workspace.streams.find(id: pln.ws.id) {
-//                    if let index = stand.today.findIndex(wsid: ws.id) {
-//                        Task {
-//                            await runPlan(
-//                                index,
-//                                prompt: wsPlanPrompt(
-//                                    ws,
-//                                    ws.plans.forStand(stand.id)
-//                                )
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-    }
-    
-    @MainActor
-    private func runUpdate(_ index: Int, prompt: String) async {
-//        stand.prevDay[index].ai.final = nil
-//        stand.prevDay[index].ai.partial = nil
-//        stand.prevDay[index].ai.error = nil
-//        stand.prevDay[index].ai.active = true
-//        let stream = streamOpenAIChat(
-//            prompt: prompt,
-//            config: OpenAIConfig(settings)
-//        )
-//        do {
-//            for try await partial in stream {
-//                stand.prevDay[index].ai.partial = partial
-//            }
-//            stand.prevDay[index].ai.final = stand.prevDay[index].ai.partial
-//            stand.prevDay[index].body = stand.prevDay[index].ai.final
-//            stand.prevDay[index].ai.partial = nil
-//        } catch {
-//            stand.prevDay[index].ai.error = error.localizedDescription
-//        }
-//        stand.prevDay[index].ai.active = false
-    }
-    
-    @MainActor
-    private func runPlan(_ index: Int, prompt: String) async {
-//        stand.today[index].ai.final = nil
-//        stand.today[index].ai.partial = nil
-//        stand.today[index].ai.error = nil
-//        stand.today[index].ai.active = true
-//        let stream = streamOpenAIChat(
-//            prompt: prompt,
-//            config: OpenAIConfig(settings)
-//        )
-//        do {
-//            for try await partial in stream {
-//                stand.today[index].ai.partial = partial
-//            }
-//            stand.today[index].ai.final = stand.today[index].ai.partial
-//            stand.today[index].body = stand.today[index].ai.final
-//            stand.today[index].ai.partial = nil
-//        } catch {
-//            stand.today[index].ai.error = error.localizedDescription
-//        }
-//        stand.today[index].ai.active = false
-    }
-    
-    private var title: String {
-        if stand.editing {
-            return "Editing: \(stand.title)"
-        }
-        return stand.title
-    }
-    
     private func publish() {
         space.publishStandup(stand.id)
     }
 
+    private var formattedDate: String {
+        stand.rangeStart.formatted(date: .abbreviated, time: .omitted)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(title)
-                    .font(.title)
-                    .padding(.bottom)
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: stand.published ? "doc.text.fill" : "doc.text")
+                    .font(.title2)
+                    .foregroundColor(stand.published ? .secondary : .accentColor)
+                    .frame(width: 28, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(stand.title)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .textSelection(.enabled)
+                    HStack(spacing: 6) {
+                        Text(formattedDate)
+                        Text("·")
+                        Text(stand.editing ? "Draft" : "Published")
+                            .foregroundStyle(stand.editing ? .orange : .green)
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+
                 Spacer()
+
                 if stand.editing {
-                    HStack {
-//                        Button(action: runAll) {
-//                            Label(
-//                                "Generate all summaries",
-//                                systemImage: "sparkles.rectangle.stack"
-//                            )
-//                        }
-                        Button(action: publish) {
-                            Label(
-                                "Publish standup",
-                                systemImage: "checkmark.seal"
-                            )
-                        }
+                    Button(action: publish) {
+                        Label("Publish", systemImage: "checkmark.seal.fill")
                     }
                     .controlSize(.regular)
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                 }
             }
+            .padding(.bottom, 12)
             if stand.editing {
                 TabView {
                     Tab("Edit", systemImage: "pencil") {
-                        EditStandScrollView(
-                            space: $space,
-                            stand: stand
-                        )
+                        EditStandScrollView(space: $space, stand: stand)
                     }
                     Tab(
                         "Formatted",
                         systemImage: "paragraphsign"
                     ) {
-                        StandFormattedView(
-                            stand: stand,
-                            space: $space
-                        )
+                        StandFormattedView(stand: stand, space: $space)
                     }
                 }
+                .tabViewStyle(.grouped)
             } else {
-                StandFormattedView(
-                    stand: stand,
-                    space: $space
-                )
+                StandFormattedView(stand: stand, space: $space)
             }
         }
     }

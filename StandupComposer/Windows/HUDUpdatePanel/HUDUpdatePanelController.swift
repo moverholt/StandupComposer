@@ -24,6 +24,6 @@ class HUDUpdatePanelController: NSWindowController {
             rootView: HUDUpdateContentView(space: space)
         )
         self.contentViewController = hostingController
-        panel.setFrameAutosaveName("hud-update-panel-4")
+         panel.setFrameAutosaveName("hud-update-panel-4")
     }
 }

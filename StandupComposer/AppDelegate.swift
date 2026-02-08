@@ -29,7 +29,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         windowNibName: "SettingsWindowController"
     )
     private var wsPanelControllers: [Workstream.ID: WorkstreamPanelController] = [:]
-    private var tempStandDocController: StandDocWindowController?
+    private var statusFlashTimer: Timer?
+    private var statusFlashShowingAlt = false
     
     func applicationDidFinishLaunching(
         _ aNotification: Notification
@@ -37,6 +38,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusMenu()
         registerGlobalHotKey()
         installHotKeyHandler()
+        
+        startStatusItemFlash()
         
         dayChangeObserver = NotificationCenter.default.addObserver(
             forName: .NSCalendarDayChanged,
@@ -129,7 +132,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             get: { self.currWSDoc!.model.workspace },
             set: { self.currWSDoc!.model.workspace = $0 }
         )
-        cont.stream = self.currWSDoc!.model.workspace.streams.find(id: id)
+        cont.stream = Binding(
+            get: {
+                self.currWSDoc!.model.workspace.streams.find(id: id)!
+            },
+            set: {
+                self.currWSDoc!.model.workspace.updateWorkstream($0)
+            }
+        )
         wsPanelControllers[id] = cont
         return cont
     }
@@ -150,6 +160,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             systemSymbolName: "\(IsoDay.today.day).calendar",
             accessibilityDescription: "Journal"
         )
+    }
+    
+    func startStatusItemFlash() {
+        guard statusFlashTimer == nil else { return }
+        statusFlashShowingAlt = false
+        statusFlashTimer = Timer.scheduledTimer(
+            withTimeInterval: 2.0,
+            repeats: true
+        ) { [weak self] _ in
+            guard let self, let button = self.statusItem.button else { return }
+            self.statusFlashShowingAlt.toggle()
+            let symbolName = self.statusFlashShowingAlt
+                ? "questionmark.square"
+                : "\(IsoDay.today.day).calendar"
+            button.image = NSImage(
+                systemSymbolName: symbolName,
+                accessibilityDescription: "Journal"
+            )
+        }
+    }
+    
+    func stopStatusItemFlash() {
+        statusFlashTimer?.invalidate()
+        statusFlashTimer = nil
+        statusFlashShowingAlt = false
+        updateStatusItemImage()
     }
     
     private func registerGlobalHotKey() {
@@ -334,48 +370,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool {
         return false
-    }
-    
-    func showTempStandDocWindow() {
-        if let cont = tempStandDocController {
-            cont.showWindow(self)
-            cont.window?.makeKeyAndOrderFront(self)
-            return
-        }
-        guard let doc = currWSDoc else {
-            print("showTempStandDocWindow: No current workspace document")
-            return
-        }
-        print("showTempStandDocWindow: Current doc: \(doc.displayName ?? "unnamed")")
-        
-        guard let stand = doc.model.workspace.editingStandup else {
-            print("showTempStandDocWindow: No editing standup found")
-            return
-        }
-        guard let index = doc.model.workspace.stands.findIndex(id: stand.id) else {
-            print("showTempStandDocWindow: Could not find standup index")
-            return
-        }
-        
-        print("showTempStandDocWindow: Creating window controller")
-        let cont = StandDocWindowController(
-            windowNibName: "StandDocWindowController"
-        )
-        tempStandDocController = cont
-        cont.space = Binding(
-            get: { self.currWSDoc!.model.workspace },
-            set: { self.currWSDoc!.model.workspace = $0 }
-        )
-//        cont.stand = Binding(
-//            get: { self.currWSDoc!.model.workspace.stands[index] },
-//            set: { self.currWSDoc!.model.workspace.stands[index] = $0 }
-//        )
-        
-        print("showTempStandDocWindow: Showing window")
-        cont.showWindow(self)
-        cont.window?.makeKeyAndOrderFront(self)
-        NSApp.activate(ignoringOtherApps: true)
-        print("showTempStandDocWindow: Window shown, isVisible: \(cont.window?.isVisible ?? false)")
     }
 }
 

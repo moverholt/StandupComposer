@@ -685,7 +685,7 @@
         </menu>
         <menu title="Status Menu" id="tit-He-2iD" userLabel="Status Menu">
             <items>
-                <menuItem title="Open Update Bar" keyEquivalent="j" id="pP7-pR-8F8">
+                <menuItem title="Open Update Bar" keyEquivalent="u" id="pP7-pR-8F8">
                     <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                     <connections>
                         <action selector="handleOpenUpdateBar:" target="Voe-Tx-rLC" id="JAp-kL-n4x"/>

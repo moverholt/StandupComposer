@@ -11,7 +11,7 @@ struct WorkstreamPanelContentView: View {
     @Environment(\.dismiss) private var dismiss
 
     @Binding var space: Workspace
-    let stream: Workstream
+    @Binding var stream: Workstream
 
     @State private var text = ""
     @State private var position = ScrollPosition(edge: .bottom)
@@ -20,6 +20,7 @@ struct WorkstreamPanelContentView: View {
         Dictionary(grouping: stream.entries, by: \.day)
     }
 
+    @MainActor
     private var sortedDays: [IsoDay] {
         entriesByDay.keys.sorted(by: <)
     }
@@ -34,23 +35,39 @@ struct WorkstreamPanelContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(stream.title)
-                    .font(.headline)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(stream.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    if let key = stream.issueKey {
+                        Text(key)
+                            .font(.subheadline)
+                            .fontDesign(.monospaced)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
-                HStack(spacing: 2) {
+                HStack(spacing: 6) {
                     Button(action: {
                         NSApp.appDelegate?.showWorkstreamInWorkspace(stream.id)
                         dismiss()
                     }) {
-                        Image(systemName: "uiwindow.split.2x1")
+                        Image(systemName: "macwindow")
+                            .imageScale(.small)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
+                    .help("Open in workspace")
                     Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
+                        Image(systemName: "xmark.circle.fill")
+                            .imageScale(.small)
+                            .frame(width: 20, height: 20)
+                            .contentShape(Rectangle())
                     }
+                    .help("Close")
                 }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
+                .buttonStyle(.accessoryBar)
+                .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -134,12 +151,15 @@ struct WorkstreamPanelContentView: View {
         if let stream = space.streams.first {
             WorkstreamPanelContentView(
                 space: $space,
-                stream: stream
+                stream: Binding(
+                    get: { stream },
+                    set: { space.updateWorkstream($0) }
+                )
             )
         }
     }
     .frame(width: 400, height: 200)
     .onAppear{
-        let _ = space.createWorkstream("Preview stream")
+        let _ = space.createWorkstream("Preview stream", "FOOD-1234")
     }
 }
